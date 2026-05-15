@@ -555,6 +555,11 @@ const STYLES = `
     text-shadow: 0 0 60px rgba(245,203,107,0.55);
     opacity: 0;
     transform: translateY(10px);
+  }
+  /* Animations only fire once .entering is added (on Enter click).
+     Without this gating, they'd run-and-finish on page load and the
+     bismillah would already be at opacity 0 by the time it's revealed. */
+  .zk-root.entering .zk-veil-content {
     animation:
       zkVeilIn  1.7s cubic-bezier(0.16,1,0.3,1) 0.7s forwards,
       zkVeilOut 0.7s ease 2.8s forwards;
