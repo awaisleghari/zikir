@@ -1,0 +1,54 @@
+[
+  {
+    "id": "morning-shield",
+    "title": "Morning Shield",
+    "arabic": "حِصْنُ ٱلصَّبَاحِ",
+    "color": "#f0a93d",
+    "when": "After Fajr, as the day begins",
+    "desc": "Begin the day fortified — forgiveness sought, protection asked, blessings sent.",
+    "steps": [
+      { "ref": "istighfar", "count": 1 },
+      { "ref": "m1",        "count": 3 },
+      { "ref": "durood",    "count": 10 }
+    ]
+  },
+  {
+    "id": "evening-calm",
+    "title": "Evening Calm",
+    "arabic": "سَكِينَةُ ٱلْمَسَاءِ",
+    "color": "#9b7ff0",
+    "when": "After Asr, before the light fades",
+    "desc": "Close the day in remembrance — dominion handed back, the night entered protected.",
+    "steps": [
+      { "ref": "m3",        "count": 1 },
+      { "ref": "m1",        "count": 3 },
+      { "ref": "istighfar", "count": 1 }
+    ]
+  },
+  {
+    "id": "relief-distress",
+    "title": "Relief in Distress",
+    "arabic": "فَرَجٌ بَعْدَ كَرْبٍ",
+    "color": "#f7796b",
+    "when": "Any moment of fear, grief, or overwhelm",
+    "desc": "A sequence for moments that press close — the call from darkness, then trust, then steadiness.",
+    "steps": [
+      { "ref": "h1", "count": 3 },
+      { "ref": "h2", "count": 7 },
+      { "ref": "h3", "count": 1 }
+    ]
+  },
+  {
+    "id": "before-hard",
+    "title": "Before Something Hard",
+    "arabic": "قَبْلَ ٱلْأَمْرِ ٱلصَّعْبِ",
+    "color": "#3dd0c4",
+    "when": "Before an interview, exam, or hard conversation",
+    "desc": "Steady the heart before you begin — ease asked, the tongue loosened, blessings sent.",
+    "steps": [
+      { "ref": "p2",     "count": 1 },
+      { "ref": "g2",     "count": 1 },
+      { "ref": "durood", "count": 3 }
+    ]
+  }
+]

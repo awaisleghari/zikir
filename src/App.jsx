@@ -1,0 +1,1098 @@
+import { useState, useEffect } from "react";
+
+import DUAS_RAW       from "./content/duas.json";
+import ADHKAR_RAW     from "./content/adhkar.json";
+import ROUTINES_RAW   from "./content/routines.json";
+import TAXONOMY       from "./content/taxonomy.json";
+
+// ─── Style injection (fonts + animations + scrollbars) ───────────────────────
+
+const STYLE = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Amiri:wght@400;700&family=Amiri+Quran&display=swap');
+
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(8px); }  to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn   { from { opacity: 0; }                              to { opacity: 1; } }
+  @keyframes detailIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes drop     { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes speakPulse {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    50%      { box-shadow: 0 0 0 9px var(--pulse); }
+  }
+
+  .listitem  { animation: drop 0.22s ease both; }
+  .detailIn  { animation: detailIn 0.34s cubic-bezier(0.16,1,0.3,1) both; }
+  .fadeIn    { animation: fadeIn 0.3s ease both; }
+  .speaking  { animation: speakPulse 1.6s ease-in-out infinite; }
+
+  .noscroll::-webkit-scrollbar { width: 0; height: 0; }
+  .noscroll { scrollbar-width: none; }
+
+  .thinscroll::-webkit-scrollbar { width: 5px; }
+  .thinscroll::-webkit-scrollbar-thumb { background: rgba(184,193,236,0.22); border-radius: 3px; }
+  .thinscroll::-webkit-scrollbar-track { background: transparent; }
+
+  * { box-sizing: border-box; }
+`;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function rgba(hex, a) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ─── Palette ─────────────────────────────────────────────────────────────────
+
+const C = {
+  bg:        "#16161a",
+  void:      "#010101",
+  panel:     "#1a1f33",
+  surface:   "#232946",
+  surfaceHi: "#2b3252",
+  text:      "#fffffe",
+  textSub:   "#b8c1ec",
+  textMuted: "#94a1b2",
+  textFaint: "#72757e",
+  line:      "rgba(184,193,236,0.12)",
+  lineHi:    "rgba(184,193,236,0.28)",
+};
+
+// Lens tab colors — one signature per top-level tab.
+const LENS_COLOR = {
+  moods:    "#e58fa0",
+  timings:  "#f5b14e",
+  sources:  "#3dd0c4",
+  routines: "#7f5af0",
+};
+
+const SERIF  = "'Cormorant Garamond', 'Lora', Georgia, serif";
+const BODY   = "'Lora', Georgia, serif";
+const ARABIC = "'Amiri Quran', 'Amiri', 'Scheherazade New', serif";
+
+// ─── Taxonomy lookups (built once from JSON) ─────────────────────────────────
+
+const MOODS      = TAXONOMY.moods;
+const TIMINGS    = TAXONOMY.timings;
+const SOURCES    = TAXONOMY.sources;
+const CAT_LABEL  = TAXONOMY.categories;
+
+const MOOD_COLOR   = Object.fromEntries(MOODS.map(m => [m.id, m.color]));
+const TIMING_COLOR = Object.fromEntries(TIMINGS.map(t => [t.id, t.color]));
+const SOURCE_COLOR = Object.fromEntries(SOURCES.map(s => [s.id, s.color]));
+
+const LENSES = [
+  { id: "moods",    label: "Moods",    glyph: "♡" },
+  { id: "timings",  label: "Timings",  glyph: "☾" },
+  { id: "sources",  label: "Sources",  glyph: "❖" },
+  { id: "routines", label: "Routines", glyph: "✦" },
+];
+
+// ─── Content prep (computed once at module load) ─────────────────────────────
+
+// Attach derived `collections` to each dua based on a regex match of `source`.
+const DUAS = DUAS_RAW.map(d => ({
+  ...d,
+  collections: SOURCES
+    .filter(s => new RegExp(s.match, "i").test(d.source))
+    .map(s => s.id),
+}));
+
+const DUA_BY_ID    = Object.fromEntries(DUAS.map(d => [d.id, d]));
+const ADHKAR_BY_ID = Object.fromEntries(ADHKAR_RAW.map(a => [a.id, a]));
+const ROUTINES     = ROUTINES_RAW;
+
+const duaColor = (d) => MOOD_COLOR[d.moods?.[0]] || C.textSub;
+
+// ─── Content validation ─────────────────────────────────────────────────────
+// Runs at module load. Console-warns about typos so editing mistakes are
+// caught immediately — wrong mood tag, broken routine reference, etc.
+
+(function validateContent() {
+  const moodSet    = new Set(MOODS.map(m => m.id));
+  const timingSet  = new Set(TIMINGS.map(t => t.id));
+  const catSet     = new Set(Object.keys(CAT_LABEL));
+  const issues     = [];
+
+  DUAS.forEach(d => {
+    if (!d.id || !d.title || !d.arabic) issues.push(`Dua missing required field: ${JSON.stringify(d.id || d.title || "<unknown>")}`);
+    if (!d.translations?.en) issues.push(`Dua "${d.id}" missing English translation`);
+    (d.moods || []).forEach(m => { if (!moodSet.has(m)) issues.push(`Dua "${d.id}" has unknown mood "${m}"`); });
+    (d.timings || []).forEach(t => { if (!timingSet.has(t)) issues.push(`Dua "${d.id}" has unknown timing "${t}"`); });
+    if (d.category && !catSet.has(d.category)) issues.push(`Dua "${d.id}" has unknown category "${d.category}"`);
+  });
+
+  ROUTINES.forEach(r => {
+    (r.steps || []).forEach(s => {
+      if (!DUA_BY_ID[s.ref] && !ADHKAR_BY_ID[s.ref]) {
+        issues.push(`Routine "${r.id}" references unknown id "${s.ref}" — must match a dua or dhikr id.`);
+      }
+    });
+  });
+
+  if (issues.length) {
+    /* eslint-disable no-console */
+    console.warn("[Zikir] content issues found:");
+    issues.forEach(i => console.warn("  ·", i));
+    /* eslint-enable */
+  }
+})();
+
+// Resolve a routine step's `ref` into its full content.
+const resolveStep = (step) => {
+  const c = DUA_BY_ID[step.ref] || ADHKAR_BY_ID[step.ref];
+  return { ...c, count: step.count };
+};
+
+// Build the navigation groups for a given lens.
+function groupsForLens(lens) {
+  if (lens === "moods") {
+    return MOODS.map(m => ({
+      id: m.id, label: m.label, color: m.color,
+      duas: DUAS.filter(d => (d.moods || []).includes(m.id)),
+    })).filter(g => g.duas.length);
+  }
+  if (lens === "timings") {
+    return TIMINGS.map(t => ({
+      id: t.id, label: t.label, color: t.color,
+      duas: DUAS.filter(d => (d.timings || []).includes(t.id)),
+    })).filter(g => g.duas.length);
+  }
+  if (lens === "sources") {
+    return SOURCES.map(s => ({
+      id: s.id, label: s.label, color: s.color,
+      duas: DUAS.filter(d => d.collections.includes(s.id)),
+    })).filter(g => g.duas.length);
+  }
+  return [];
+}
+
+// Translation helper — gracefully falls back to English if a translation is missing.
+const translateOf = (entry, lang) =>
+  entry?.translations?.[lang] || entry?.translations?.en || "";
+
+// ─── Components ──────────────────────────────────────────────────────────────
+
+function LensTab({ lens, active, onClick }) {
+  const [hov, setHov] = useState(false);
+  const col = LENS_COLOR[lens.id];
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        flex: 1,
+        background: active ? rgba(col, 0.14) : hov ? C.surfaceHi : "transparent",
+        border: `1px solid ${active ? rgba(col, 0.55) : C.line}`,
+        borderRadius: 12,
+        padding: "9px 4px 8px",
+        cursor: "pointer",
+        transition: "all 0.16s ease",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+      }}
+    >
+      <span style={{ fontSize: 13, color: active ? col : C.textMuted }}>{lens.glyph}</span>
+      <span style={{
+        fontSize: 11, fontFamily: BODY,
+        color: active ? C.text : C.textMuted,
+        fontWeight: active ? 600 : 400,
+        letterSpacing: "0.02em",
+      }}>
+        {lens.label}
+      </span>
+    </button>
+  );
+}
+
+function GroupHeader({ group, open, onClick }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        width: "100%", textAlign: "left",
+        background: open ? rgba(group.color, 0.10) : hov ? C.surface : "transparent",
+        border: `1px solid ${open ? rgba(group.color, 0.4) : C.line}`,
+        borderRadius: 11,
+        padding: "11px 13px",
+        cursor: "pointer",
+        transition: "all 0.15s ease",
+        display: "flex", alignItems: "center", gap: 10,
+      }}
+    >
+      <span style={{
+        width: 9, height: 9, borderRadius: 3, flexShrink: 0,
+        background: group.color,
+        boxShadow: open ? `0 0 8px ${rgba(group.color, 0.7)}` : "none",
+        transition: "box-shadow 0.2s",
+      }} />
+      <span style={{
+        flex: 1, fontFamily: BODY, fontSize: 13.5,
+        color: open ? C.text : C.textSub,
+        fontWeight: open ? 600 : 400,
+      }}>
+        {group.label}
+      </span>
+      <span style={{
+        fontFamily: BODY, fontSize: 10.5,
+        color: open ? group.color : C.textFaint,
+        letterSpacing: "0.04em",
+      }}>
+        {group.duas.length}
+      </span>
+      <span style={{
+        color: open ? group.color : C.textFaint, fontSize: 9,
+        transform: open ? "rotate(90deg)" : "none",
+        transition: "transform 0.2s ease",
+      }}>▶</span>
+    </button>
+  );
+}
+
+function DuaListItem({ dua, selected, onClick }) {
+  const [hov, setHov] = useState(false);
+  const col = duaColor(dua);
+  return (
+    <button
+      className="listitem"
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        width: "100%", textAlign: "left",
+        background: selected ? rgba(col, 0.12) : hov ? C.surface : "transparent",
+        border: `1px solid ${selected ? rgba(col, 0.45) : "transparent"}`,
+        borderLeft: `2px solid ${selected || hov ? col : "transparent"}`,
+        borderRadius: 9,
+        padding: "9px 11px",
+        cursor: "pointer",
+        transition: "background 0.14s ease, border-color 0.14s ease",
+        display: "flex", flexDirection: "column", gap: 3,
+      }}
+    >
+      <span style={{
+        fontFamily: SERIF, fontSize: 15,
+        color: selected ? C.text : C.textSub,
+        fontWeight: 500, lineHeight: 1.25,
+      }}>
+        {dua.title}
+      </span>
+      <span style={{
+        fontFamily: BODY, fontSize: 11, color: C.textFaint,
+        fontStyle: "italic", lineHeight: 1.4,
+      }}>
+        {dua.use}
+      </span>
+    </button>
+  );
+}
+
+function RoutineListItem({ routine, selected, onClick }) {
+  const [hov, setHov] = useState(false);
+  const col = routine.color;
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        width: "100%", textAlign: "left",
+        background: selected ? rgba(col, 0.12) : hov ? C.surface : "transparent",
+        border: `1px solid ${selected ? rgba(col, 0.45) : C.line}`,
+        borderRadius: 11,
+        padding: "13px 14px",
+        cursor: "pointer",
+        transition: "all 0.15s ease",
+        display: "flex", flexDirection: "column", gap: 6,
+        marginBottom: 8,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+        <span style={{
+          fontFamily: ARABIC, fontSize: "1.1rem", color: col, lineHeight: 1,
+        }}>
+          {routine.arabic}
+        </span>
+        <span style={{
+          marginLeft: "auto", fontFamily: BODY, fontSize: 10,
+          color: C.textFaint, letterSpacing: "0.05em",
+        }}>
+          {routine.steps.length} steps
+        </span>
+      </div>
+      <span style={{
+        fontFamily: SERIF, fontSize: 16, fontWeight: 500,
+        color: selected ? C.text : C.textSub, lineHeight: 1.2,
+      }}>
+        {routine.title}
+      </span>
+      <span style={{
+        fontFamily: BODY, fontSize: 11.5, color: C.textFaint,
+        fontStyle: "italic", lineHeight: 1.5,
+      }}>
+        {routine.when}
+      </span>
+    </button>
+  );
+}
+
+function Sidebar({
+  lens, setLens, groups, openGroup, setOpenGroup,
+  selected, onSelectDua, onSelectRoutine, isNarrow,
+}) {
+  return (
+    <div style={{
+      width: isNarrow ? "100%" : 322,
+      flexShrink: 0,
+      background: C.panel,
+      borderRight: isNarrow ? "none" : `1px solid ${C.line}`,
+      height: isNarrow ? "auto" : "100vh",
+      display: "flex", flexDirection: "column",
+    }}>
+      {/* Brand */}
+      <div style={{ padding: "20px 20px 14px", borderBottom: `1px solid ${C.line}` }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
+          <span style={{
+            fontFamily: SERIF, fontSize: 24, fontWeight: 500, color: C.text,
+            letterSpacing: "-0.01em",
+          }}>
+            Zikir
+          </span>
+          <span style={{
+            fontFamily: ARABIC, fontSize: "1.25rem", color: C.textSub,
+            marginLeft: "auto", opacity: 0.8,
+          }}>
+            ذِكْر
+          </span>
+        </div>
+        <div style={{
+          fontFamily: BODY, fontSize: 10.5, color: C.textFaint,
+          letterSpacing: "0.04em", marginTop: 4,
+        }}>
+          Duas from the Quran &amp; Sunnah · authenticated
+        </div>
+      </div>
+
+      {/* Lens tabs */}
+      <div style={{
+        display: "flex", gap: 6, padding: "12px 14px 10px",
+        borderBottom: `1px solid ${C.line}`,
+      }}>
+        {LENSES.map(l => (
+          <LensTab key={l.id} lens={l} active={lens === l.id} onClick={() => setLens(l.id)} />
+        ))}
+      </div>
+
+      {/* Lens caption */}
+      <div style={{
+        padding: "11px 18px 8px",
+        fontFamily: BODY, fontSize: 11, color: C.textFaint,
+        fontStyle: "italic", letterSpacing: "0.01em",
+      }}>
+        {lens === "moods"    && "Find a dua by the state of your heart"}
+        {lens === "timings"  && "Find a dua by the hour of your day"}
+        {lens === "sources"  && "Browse by the collection it comes from"}
+        {lens === "routines" && "Short sequences to recite together"}
+      </div>
+
+      {/* Scrollable navigation body */}
+      <div className="thinscroll" style={{
+        flex: 1, overflowY: "auto",
+        padding: "2px 14px 22px",
+        maxHeight: isNarrow ? "none" : undefined,
+      }}>
+        {lens === "routines"
+          ? ROUTINES.map(r => (
+              <RoutineListItem
+                key={r.id}
+                routine={r}
+                selected={selected?.type === "routine" && selected.id === r.id}
+                onClick={() => onSelectRoutine(r)}
+              />
+            ))
+          : groups.map(g => (
+              <div key={g.id} style={{ marginBottom: 7 }}>
+                <GroupHeader
+                  group={g}
+                  open={openGroup === g.id}
+                  onClick={() => setOpenGroup(openGroup === g.id ? null : g.id)}
+                />
+                {openGroup === g.id && (
+                  <div className="fadeIn" style={{
+                    display: "flex", flexDirection: "column", gap: 2,
+                    padding: "6px 0 4px 6px",
+                  }}>
+                    {g.duas.map(d => (
+                      <DuaListItem
+                        key={d.id}
+                        dua={d}
+                        selected={selected?.type === "dua" && selected.id === d.id}
+                        onClick={() => onSelectDua(d)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+      </div>
+    </div>
+  );
+}
+
+function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT, ttsOk }) {
+  const accent = duaColor(dua);
+  const isUr = lang === "ur";
+  const translation = translateOf(dua, lang);
+
+  return (
+    <div className="detailIn" style={{ maxWidth: 620, margin: "0 auto" }}>
+      <div style={{
+        fontFamily: BODY, fontSize: 12.5, color: accent,
+        letterSpacing: "0.02em", marginBottom: 6,
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <span style={{ fontSize: 9 }}>✦</span>
+        {dua.use}
+      </div>
+      <div style={{
+        fontFamily: BODY, fontSize: 9.5, color: C.textFaint,
+        letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 14,
+      }}>
+        {CAT_LABEL[dua.category]}
+      </div>
+
+      <h2 style={{
+        margin: "0 0 22px", fontSize: 27, fontWeight: 500,
+        fontFamily: SERIF, color: C.text, lineHeight: 1.25,
+        letterSpacing: "-0.01em",
+      }}>
+        {dua.title}
+      </h2>
+
+      <div style={{
+        textAlign: "center", color: accent, fontSize: 12,
+        letterSpacing: "0.55em", marginBottom: 16, opacity: 0.55,
+      }}>✦ ✦ ✦</div>
+
+      <div
+        className={speaking ? "speaking" : ""}
+        style={{
+          "--pulse": rgba(accent, 0.18),
+          background: C.surface,
+          border: `1px solid ${speaking ? rgba(accent, 0.6) : C.line}`,
+          borderRadius: 18,
+          padding: "34px 28px",
+          marginBottom: 18,
+          textAlign: "center",
+          direction: "rtl",
+          transition: "border-color 0.3s",
+        }}
+      >
+        <div style={{
+          fontFamily: ARABIC, fontSize: "2.2rem", lineHeight: 2.45,
+          color: C.text, fontFeatureSettings: "'liga' 1, 'calt' 1",
+        }}>
+          {dua.arabic}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
+        <button
+          onClick={() => (speaking ? stop() : speak(dua.arabic))}
+          disabled={!ttsOk}
+          style={{
+            background: speaking ? accent : rgba(accent, 0.14),
+            border: `1px solid ${accent}`,
+            borderRadius: 999, padding: "9px 18px",
+            cursor: ttsOk ? "pointer" : "not-allowed",
+            color: speaking ? C.void : accent,
+            fontSize: 13, fontWeight: 600, fontFamily: BODY,
+            display: "inline-flex", alignItems: "center", gap: 8,
+            opacity: ttsOk ? 1 : 0.5, transition: "all 0.15s",
+          }}
+        >
+          <span style={{ fontSize: 11 }}>{speaking ? "■" : "▶"}</span>
+          {speaking ? "Stop" : "Listen in Arabic"}
+        </button>
+
+        <button
+          onClick={() => setShowT(!showT)}
+          style={{
+            background: "transparent", border: `1px solid ${C.line}`,
+            borderRadius: 999, padding: "9px 14px", cursor: "pointer",
+            color: showT ? C.textSub : C.textFaint,
+            fontSize: 12, fontFamily: BODY,
+          }}
+        >
+          {showT ? "— Hide" : "+ Show"} transliteration
+        </button>
+
+        <div style={{ display: "flex", marginLeft: "auto" }}>
+          {[{ id: "en", label: "EN" }, { id: "ur", label: "اردو" }].map((l, i) => (
+            <button
+              key={l.id}
+              onClick={() => setLang(l.id)}
+              style={{
+                background: lang === l.id ? rgba(accent, 0.14) : "transparent",
+                border: `1px solid ${lang === l.id ? rgba(accent, 0.5) : C.line}`,
+                borderLeft: i > 0 ? "none" : undefined,
+                borderRadius: i === 0 ? "999px 0 0 999px" : "0 999px 999px 0",
+                padding: "8px 14px", cursor: "pointer",
+                color: lang === l.id ? C.text : C.textFaint,
+                fontSize: 12, fontWeight: lang === l.id ? 600 : 400,
+                fontFamily: l.id === "ur" ? ARABIC : BODY,
+              }}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {showT && (
+        <div style={{
+          fontSize: 14.5, color: C.textSub, fontStyle: "italic",
+          fontFamily: SERIF, lineHeight: 1.85, marginBottom: 18,
+          padding: "14px 0",
+          borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}`,
+        }}>
+          {dua.translit}
+        </div>
+      )}
+
+      <div style={{
+        fontSize: isUr ? 18 : 16.5, color: C.text, lineHeight: 1.85,
+        marginBottom: 24, direction: isUr ? "rtl" : "ltr",
+        fontFamily: isUr ? ARABIC : SERIF,
+        fontStyle: isUr ? "normal" : "italic", fontWeight: 400,
+      }}>
+        {translation}
+      </div>
+
+      <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 18, marginBottom: 18 }}>
+        <div style={{
+          fontSize: 10, color: C.textFaint, textTransform: "uppercase",
+          letterSpacing: "0.18em", marginBottom: 6, fontFamily: BODY,
+        }}>Source</div>
+        <div style={{ fontSize: 13, color: C.textSub, fontFamily: BODY }}>{dua.source}</div>
+      </div>
+
+      <div style={{
+        background: rgba(MOOD_COLOR.grateful || "#2cb67d", 0.10),
+        border: `1px solid ${rgba(MOOD_COLOR.grateful || "#2cb67d", 0.35)}`,
+        borderRadius: 14, padding: "16px 18px",
+      }}>
+        <div style={{
+          fontSize: 10, color: MOOD_COLOR.grateful || "#2cb67d",
+          textTransform: "uppercase",
+          letterSpacing: "0.18em", marginBottom: 8, fontFamily: BODY, fontWeight: 600,
+        }}>✦ When to recite</div>
+        <div style={{ fontSize: 14, color: C.textSub, lineHeight: 1.7, fontFamily: BODY }}>
+          {dua.benefit}
+        </div>
+      </div>
+
+      {!ttsOk && (
+        <div style={{
+          marginTop: 16, fontSize: 11, color: C.textFaint, fontFamily: BODY,
+          fontStyle: "italic", textAlign: "center",
+        }}>
+          Arabic voice is not available on this device.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT }) {
+  const done = count >= target;
+  const isUr = lang === "ur";
+  return (
+    <div style={{
+      background: C.surface,
+      border: `1px solid ${done ? rgba(accent, 0.5) : C.line}`,
+      borderRadius: 16,
+      padding: "20px 20px 22px",
+      marginBottom: 12,
+      transition: "border-color 0.25s ease",
+      position: "relative",
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16 }}>
+        <span style={{
+          fontFamily: BODY, fontSize: 11, color: C.textFaint,
+          letterSpacing: "0.1em", marginTop: 3, flexShrink: 0,
+        }}>
+          {String(idx + 1).padStart(2, "0")}
+        </span>
+        <div style={{ flex: 1 }}>
+          <div style={{
+            fontFamily: SERIF, fontSize: 17, fontWeight: 500,
+            color: C.text, lineHeight: 1.25,
+          }}>
+            {step.title}
+          </div>
+          <div style={{
+            fontFamily: BODY, fontSize: 11, color: C.textFaint, marginTop: 3,
+          }}>
+            {step.source}
+          </div>
+        </div>
+
+        <button
+          onClick={onTap}
+          style={{
+            flexShrink: 0, width: 58, height: 58, borderRadius: 999,
+            background: done ? accent : rgba(accent, 0.1),
+            border: `1.5px solid ${done ? accent : rgba(accent, 0.5)}`,
+            cursor: "pointer",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            transition: "all 0.18s ease",
+            color: done ? C.void : accent,
+          }}
+        >
+          {done ? (
+            <span style={{ fontSize: 20 }}>✓</span>
+          ) : (
+            <>
+              <span style={{ fontFamily: BODY, fontSize: 17, fontWeight: 700, lineHeight: 1 }}>
+                {count}
+              </span>
+              <span style={{ fontFamily: BODY, fontSize: 9.5, opacity: 0.7, marginTop: 1 }}>
+                of {target}
+              </span>
+            </>
+          )}
+        </button>
+      </div>
+
+      <div style={{
+        fontFamily: ARABIC, fontSize: "1.6rem", lineHeight: 2.2,
+        direction: "rtl", textAlign: "center", color: C.text,
+        marginBottom: showT ? 10 : 6,
+        fontFeatureSettings: "'liga' 1, 'calt' 1",
+      }}>
+        {step.arabic}
+      </div>
+
+      {showT && (
+        <div style={{
+          fontFamily: SERIF, fontSize: 13, color: C.textSub, fontStyle: "italic",
+          textAlign: "center", lineHeight: 1.7, marginBottom: 8,
+        }}>
+          {step.translit}
+        </div>
+      )}
+
+      <div style={{
+        fontFamily: isUr ? ARABIC : SERIF,
+        fontSize: isUr ? 15 : 13.5,
+        color: C.textMuted, lineHeight: 1.7,
+        textAlign: "center",
+        direction: isUr ? "rtl" : "ltr",
+        fontStyle: isUr ? "normal" : "italic",
+        maxWidth: 480, margin: "0 auto",
+      }}>
+        {translateOf(step, lang)}
+      </div>
+
+      <div style={{
+        fontFamily: BODY, fontSize: 10.5, color: C.textFaint,
+        textAlign: "center", marginTop: 12, letterSpacing: "0.04em",
+      }}>
+        {done ? "completed" : "tap the circle as you recite"}
+      </div>
+    </div>
+  );
+}
+
+function RoutineDetail({ routine, lang, setLang, showT, setShowT }) {
+  const steps = routine.steps.map(resolveStep);
+  const [counts, setCounts] = useState(steps.map(() => 0));
+  const accent = routine.color;
+
+  const tap = (i) => {
+    setCounts(prev => {
+      const next = [...prev];
+      next[i] = next[i] >= steps[i].count ? 0 : next[i] + 1;
+      return next;
+    });
+  };
+
+  const completed = counts.filter((c, i) => c >= steps[i].count).length;
+  const allDone = completed === steps.length;
+
+  return (
+    <div className="detailIn" style={{ maxWidth: 620, margin: "0 auto" }}>
+      <div style={{
+        fontFamily: BODY, fontSize: 12.5, color: accent,
+        letterSpacing: "0.02em", marginBottom: 6,
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <span style={{ fontSize: 9 }}>✦</span>
+        Routine · {routine.when}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 10 }}>
+        <h2 style={{
+          margin: 0, fontSize: 27, fontWeight: 500, fontFamily: SERIF,
+          color: C.text, lineHeight: 1.2, letterSpacing: "-0.01em",
+        }}>
+          {routine.title}
+        </h2>
+        <span style={{
+          fontFamily: ARABIC, fontSize: "1.5rem", color: accent,
+          marginLeft: "auto", lineHeight: 1,
+        }}>
+          {routine.arabic}
+        </span>
+      </div>
+
+      <p style={{
+        fontFamily: SERIF, fontSize: 15.5, color: C.textSub, fontStyle: "italic",
+        lineHeight: 1.6, margin: "0 0 22px",
+      }}>
+        {routine.desc}
+      </p>
+
+      <div style={{ marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
+        <span style={{ fontFamily: BODY, fontSize: 11, color: C.textFaint, letterSpacing: "0.04em" }}>
+          {allDone ? "Sequence complete" : `${completed} of ${steps.length} complete`}
+        </span>
+        <span style={{ fontFamily: BODY, fontSize: 11, color: accent }}>
+          {Math.round((completed / steps.length) * 100)}%
+        </span>
+      </div>
+      <div style={{
+        height: 5, borderRadius: 999, background: C.surface,
+        marginBottom: 14, overflow: "hidden",
+      }}>
+        <div style={{
+          height: "100%", width: `${(completed / steps.length) * 100}%`,
+          background: accent, borderRadius: 999,
+          boxShadow: `0 0 10px ${rgba(accent, 0.6)}`,
+          transition: "width 0.4s cubic-bezier(0.16,1,0.3,1)",
+        }} />
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
+        <button
+          onClick={() => setShowT(!showT)}
+          style={{
+            background: "transparent", border: `1px solid ${C.line}`,
+            borderRadius: 999, padding: "7px 13px", cursor: "pointer",
+            color: showT ? C.textSub : C.textFaint, fontSize: 11.5, fontFamily: BODY,
+          }}
+        >
+          {showT ? "— Hide" : "+ Show"} transliteration
+        </button>
+        <div style={{ display: "flex", marginLeft: "auto" }}>
+          {[{ id: "en", label: "EN" }, { id: "ur", label: "اردو" }].map((l, i) => (
+            <button
+              key={l.id}
+              onClick={() => setLang(l.id)}
+              style={{
+                background: lang === l.id ? rgba(accent, 0.14) : "transparent",
+                border: `1px solid ${lang === l.id ? rgba(accent, 0.5) : C.line}`,
+                borderLeft: i > 0 ? "none" : undefined,
+                borderRadius: i === 0 ? "999px 0 0 999px" : "0 999px 999px 0",
+                padding: "7px 13px", cursor: "pointer",
+                color: lang === l.id ? C.text : C.textFaint,
+                fontSize: 11.5, fontWeight: lang === l.id ? 600 : 400,
+                fontFamily: l.id === "ur" ? ARABIC : BODY,
+              }}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {steps.map((s, i) => (
+        <RoutineStep
+          key={s.id}
+          step={s} idx={i}
+          count={counts[i]} target={s.count}
+          onTap={() => tap(i)}
+          accent={accent} lang={lang} showT={showT}
+        />
+      ))}
+
+      {allDone && (
+        <div className="fadeIn" style={{
+          background: rgba(accent, 0.1),
+          border: `1px solid ${rgba(accent, 0.4)}`,
+          borderRadius: 14, padding: "18px 20px", textAlign: "center",
+          marginTop: 4,
+        }}>
+          <div style={{
+            fontFamily: ARABIC, fontSize: "1.5rem", color: accent, marginBottom: 6,
+          }}>
+            تَقَبَّلَ ٱللَّهُ
+          </div>
+          <div style={{ fontFamily: SERIF, fontSize: 15, color: C.textSub, fontStyle: "italic" }}>
+            May Allah accept it. The routine is complete.
+          </div>
+        </div>
+      )}
+
+      <div style={{
+        fontFamily: BODY, fontSize: 10.5, color: C.textFaint,
+        lineHeight: 1.6, marginTop: 18, fontStyle: "italic",
+      }}>
+        A routine is a suggested sequence assembled from authenticated supplications.
+        The order and counts are a practice aid — each supplication carries its own source above.
+      </div>
+    </div>
+  );
+}
+
+function Welcome({ setLens }) {
+  return (
+    <div className="detailIn" style={{ maxWidth: 560, margin: "0 auto", textAlign: "center" }}>
+      <div style={{
+        fontFamily: ARABIC, fontSize: "2.3rem", color: C.textSub,
+        lineHeight: 1.8, marginBottom: 8,
+      }}>
+        ٱلدُّعَاءُ مُخُّ ٱلْعِبَادَةِ
+      </div>
+      <div style={{
+        fontFamily: SERIF, fontSize: 13, color: C.textFaint, fontStyle: "italic",
+        marginBottom: 38,
+      }}>
+        "Dua is the very essence of worship" — Tirmidhi 3371
+      </div>
+
+      <h1 style={{
+        fontFamily: SERIF, fontSize: "2.4rem", fontWeight: 400, color: C.text,
+        margin: "0 0 10px", letterSpacing: "-0.02em",
+      }}>
+        Where would you like to begin?
+      </h1>
+      <p style={{
+        fontFamily: SERIF, fontSize: 15.5, color: C.textSub, fontStyle: "italic",
+        margin: "0 0 34px", lineHeight: 1.55,
+      }}>
+        Navigation is on the left, and it follows your need —<br />
+        the state of your heart, the hour of your day, the source, or a routine.
+      </p>
+
+      <div style={{
+        display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
+        textAlign: "left",
+      }}>
+        {LENSES.map(l => {
+          const col = LENS_COLOR[l.id];
+          const sub = {
+            moods:    "By the state of your heart",
+            timings:  "By the hour of your day",
+            sources:  "By the collection it comes from",
+            routines: "Sequences to recite together",
+          }[l.id];
+          return (
+            <button
+              key={l.id}
+              onClick={() => setLens(l.id)}
+              style={{
+                background: rgba(col, 0.08),
+                border: `1px solid ${rgba(col, 0.35)}`,
+                borderRadius: 14, padding: "16px 16px 15px",
+                cursor: "pointer", textAlign: "left",
+                display: "flex", flexDirection: "column", gap: 5,
+                transition: "all 0.16s ease",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = rgba(col, 0.15); }}
+              onMouseLeave={e => { e.currentTarget.style.background = rgba(col, 0.08); }}
+            >
+              <span style={{ fontSize: 15, color: col }}>{l.glyph}</span>
+              <span style={{
+                fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: C.text,
+              }}>
+                {l.label}
+              </span>
+              <span style={{
+                fontFamily: BODY, fontSize: 12, color: C.textMuted, lineHeight: 1.45,
+              }}>
+                {sub}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main App ────────────────────────────────────────────────────────────────
+
+export default function App() {
+  const [lens, setLens] = useState("moods");
+  const [openGroup, setOpenGroup] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [lang, setLang] = useState("en");
+  const [speaking, setSpeaking] = useState(false);
+  const [showT, setShowT] = useState(true);
+  const [ttsOk, setTtsOk] = useState(true);
+  const [isNarrow, setIsNarrow] = useState(false);
+
+  useEffect(() => {
+    const s = document.createElement("style");
+    s.textContent = STYLE;
+    document.head.appendChild(s);
+    setTtsOk("speechSynthesis" in window);
+    return () => { s.remove(); window.speechSynthesis?.cancel(); };
+  }, []);
+
+  useEffect(() => {
+    const check = () => setIsNarrow(window.innerWidth < 900);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const groups = lens === "routines" ? [] : groupsForLens(lens);
+  useEffect(() => {
+    if (lens !== "routines" && groups.length) setOpenGroup(groups[0].id);
+    else setOpenGroup(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lens]);
+
+  const speak = (text) => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ar-SA";
+    u.rate = 0.72;
+    u.pitch = 1;
+    u.onstart = () => setSpeaking(true);
+    u.onend = () => setSpeaking(false);
+    u.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(u);
+  };
+  const stop = () => { window.speechSynthesis?.cancel(); setSpeaking(false); };
+
+  const selectDua = (d) => { stop(); setSelected({ type: "dua", id: d.id, dua: d }); };
+  const selectRoutine = (r) => { stop(); setSelected({ type: "routine", id: r.id, routine: r }); };
+  const clearSelection = () => { stop(); setSelected(null); };
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape" && selected) clearSelection(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
+
+  const detailAccent = !selected
+    ? "#7f5af0"
+    : selected.type === "routine"
+      ? selected.routine.color
+      : duaColor(selected.dua);
+
+  const DetailBody = () => {
+    if (!selected) return <Welcome setLens={setLens} />;
+    if (selected.type === "routine") {
+      return (
+        <RoutineDetail
+          key={selected.id}
+          routine={selected.routine}
+          lang={lang} setLang={setLang}
+          showT={showT} setShowT={setShowT}
+        />
+      );
+    }
+    return (
+      <DuaDetail
+        dua={selected.dua}
+        lang={lang} setLang={setLang}
+        speaking={speaking} speak={speak} stop={stop}
+        showT={showT} setShowT={setShowT} ttsOk={ttsOk}
+      />
+    );
+  };
+
+  const detailPane = (overlay) => (
+    <div
+      className="thinscroll"
+      style={{
+        flex: 1,
+        background: C.bg,
+        height: "100vh",
+        overflowY: "auto",
+        position: overlay ? "fixed" : "relative",
+        inset: overlay ? 0 : undefined,
+        zIndex: overlay ? 100 : 1,
+      }}
+    >
+      <div style={{
+        position: "fixed", top: -260,
+        left: isNarrow ? "50%" : "calc(50% + 160px)",
+        transform: "translateX(-50%)",
+        width: 720, height: 460,
+        background: `radial-gradient(ellipse at center, ${rgba(detailAccent, 0.13)} 0%, transparent 65%)`,
+        pointerEvents: "none", transition: "background 0.5s ease",
+      }} />
+      <div style={{
+        position: "fixed", inset: 0,
+        backgroundImage: `radial-gradient(${rgba(C.textSub, 0.08)} 1px, transparent 1px)`,
+        backgroundSize: "38px 38px",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ position: "relative", padding: "26px 30px 60px" }}>
+        {overlay ? (
+          <button
+            onClick={clearSelection}
+            style={{
+              background: "transparent", border: `1px solid ${C.line}`,
+              borderRadius: 999, padding: "8px 16px", cursor: "pointer",
+              color: C.textSub, fontSize: 12.5, fontFamily: BODY,
+              display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 24,
+            }}
+          >
+            <span style={{ fontSize: 13 }}>←</span> Back to navigation
+          </button>
+        ) : selected ? (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+            <button
+              onClick={clearSelection}
+              style={{
+                background: "transparent", border: `1px solid ${C.line}`,
+                borderRadius: 999, width: 30, height: 30, cursor: "pointer",
+                color: C.textFaint, fontSize: 13, fontFamily: BODY,
+              }}
+            >✕</button>
+          </div>
+        ) : null}
+
+        <DetailBody />
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{
+      background: C.bg, color: C.text, fontFamily: BODY,
+      minHeight: "100vh",
+      display: "flex",
+      overflow: isNarrow ? "visible" : "hidden",
+      height: isNarrow ? "auto" : "100vh",
+    }}>
+      <Sidebar
+        lens={lens} setLens={setLens}
+        groups={groups}
+        openGroup={openGroup} setOpenGroup={setOpenGroup}
+        selected={selected}
+        onSelectDua={selectDua}
+        onSelectRoutine={selectRoutine}
+        isNarrow={isNarrow}
+      />
+      {!isNarrow && detailPane(false)}
+      {isNarrow && selected && detailPane(true)}
+    </div>
+  );
+}

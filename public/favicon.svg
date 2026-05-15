@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#16161a"/>
+  <rect x="3" y="3" width="58" height="58" rx="12" fill="none" stroke="#7f5af0" stroke-width="1.5" opacity="0.6"/>
+  <text x="32" y="46" font-family="Amiri, 'Amiri Quran', serif" font-size="42" fill="#b8c1ec" text-anchor="middle">ذ</text>
+</svg>

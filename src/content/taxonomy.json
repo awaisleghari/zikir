@@ -1,0 +1,39 @@
+{
+  "moods": [
+    { "id": "anxious",    "label": "Anxious & Fearful",  "color": "#3dd0c4" },
+    { "id": "grieving",   "label": "Grieving",            "color": "#e58fa0" },
+    { "id": "pain",       "label": "In Pain",             "color": "#f7796b" },
+    { "id": "guidance",   "label": "Seeking Guidance",    "color": "#7f5af0" },
+    { "id": "hopeful",    "label": "Hopeful & Striving",  "color": "#f5b14e" },
+    { "id": "grateful",   "label": "Gratitude",           "color": "#2cb67d" },
+    { "id": "protection", "label": "Seeking Protection",  "color": "#6c8cff" }
+  ],
+
+  "timings": [
+    { "id": "waking",     "label": "Upon Waking",        "color": "#f4c47a" },
+    { "id": "morning",    "label": "Morning",            "color": "#f0a93d" },
+    { "id": "evening",    "label": "Evening",            "color": "#9b7ff0" },
+    { "id": "beforetask", "label": "Before a Task",      "color": "#3dd0c4" },
+    { "id": "hardmoment", "label": "In a Hard Moment",   "color": "#f7796b" }
+  ],
+
+  "sources": [
+    { "id": "quran",     "label": "The Quran",         "match": "Quran",        "color": "#2cb67d" },
+    { "id": "bukhari",   "label": "Sahih al-Bukhari",  "match": "Bukhari",      "color": "#f0a93d" },
+    { "id": "muslim",    "label": "Sahih Muslim",      "match": "Muslim",       "color": "#6c8cff" },
+    { "id": "tirmidhi",  "label": "Jamiʿ at-Tirmidhi", "match": "Tirmidhi",     "color": "#7f5af0" },
+    { "id": "abudawud",  "label": "Sunan Abu Dawud",   "match": "Abu Dawud",    "color": "#3dd0c4" },
+    { "id": "ahmad",     "label": "Musnad Ahmad",      "match": "Ahmad",        "color": "#e58fa0" },
+    { "id": "ibnhibban", "label": "Sahih Ibn Hibban",  "match": "Ibn Hibban",   "color": "#f7796b" },
+    { "id": "ibnsunni",  "label": "Ibn al-Sunni",      "match": "Ibn al-Sunni", "color": "#b8c1ec" }
+  ],
+
+  "categories": {
+    "morning":   "Morning & Evening",
+    "provision": "Provision & Work",
+    "hardship":  "Hardship & Relief",
+    "health":    "Health & Healing",
+    "guidance":  "Guidance & Decisions",
+    "family":    "Family & Marriage"
+  }
+}
