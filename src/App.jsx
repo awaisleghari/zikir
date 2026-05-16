@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import DUAS_RAW       from "./content/duas.json";
 import ADHKAR_RAW     from "./content/adhkar.json";
@@ -93,6 +93,7 @@ const STYLE = `
     cursor: pointer;
     margin: 0;
     padding: 0;
+    touch-action: none;
   }
   .zk-slider:focus { outline: none; }
 
@@ -626,30 +627,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
 
   return (
     <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto" }}>
-      {/* Desktop-only vertical rail. Absolutely positioned to the right of the
-          620px content column, sticky-anchored so it stays in view while the
-          user scrolls through the dua. The top offset is tuned so the rail's
-          center aligns with the Arabic block on initial view. */}
-      {!isNarrow && (
-        <div style={{
-          position: "absolute",
-          top: 220,
-          left: "calc(100% + 32px)",
-          height: 280,
-        }}>
-          <div style={{
-            position: "sticky",
-            top: 180,
-          }}>
-            <FontSizeSlider
-              zoom={zoom}
-              setZoom={setZoom}
-              accent={accent}
-              vertical
-            />
-          </div>
-        </div>
-      )}      <div style={{
+      <div style={{
         fontFamily: BODY, fontSize: 12.5, color: accent,
         letterSpacing: "0.02em", marginBottom: 6,
         display: "flex", alignItems: "center", gap: 8,
@@ -677,43 +655,60 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         letterSpacing: "0.55em", marginBottom: 16, opacity: 0.55,
       }}>✦ ✦ ✦</div>
 
-      {/* Arabic — no container. Words float on the page, each carrying a
-          subtle accent-colored halo via text-shadow. The hue is the dua's
-          mood color at very low intensity, so words feel luminous rather
-          than tinted. On recitation, the halo gently pulses up and back. */}
-      <div
-        className={speaking ? "speaking-glow" : ""}
-        style={{
-          "--glow": rgba(accent, 0.45),
-          "--glow-soft": rgba(accent, 0.22),
-          fontFamily: arabicFont(script),
-          fontSize: `calc(${2.2 * arabicScale(script)}rem * var(--zk-arabic-scale, 1))`,
-          lineHeight: script === "indopak" ? 2.7 : 2.45,
-          color: C.text,
-          fontFeatureSettings: "'liga' 1, 'calt' 1",
-          textAlign: "center",
-          direction: "rtl",
-          padding: "20px 0 34px",
-          transition: "font-family 0.2s ease",
-        }}
-      >
-        {dua.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
-          // Each word renders inside its own span so the text-shadow halo
-          // belongs to the word, not the whole block — giving the floating
-          // quality. <wbr> after each word would force a break-here hint;
-          // we instead rely on natural Arabic line-break behaviour and use
-          // a thin space to keep word boundaries clean.
-          <span
-            key={i}
-            className="zikir-word"
-            style={{
-              display: "inline-block",
-              padding: "0 0.18em",
-            }}
-          >
-            {word}
-          </span>
-        ))}
+      {/* Arabic block + co-located desktop slider. The grid puts the slider
+          beside the Arabic and centers them against each other, so the rail
+          is anchored to the text it controls (not floating against the page
+          at large). On mobile the grid collapses to a single column and the
+          horizontal slider appears further down, below the script selector. */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isNarrow ? "1fr" : "minmax(0, 1fr) 72px",
+        alignItems: "center",
+        columnGap: isNarrow ? 0 : 56,
+        margin: "0 auto",
+      }}>
+        <div
+          className={speaking ? "speaking-glow" : ""}
+          style={{
+            "--glow": rgba(accent, 0.45),
+            "--glow-soft": rgba(accent, 0.22),
+            fontFamily: arabicFont(script),
+            fontSize: `calc(${2.2 * arabicScale(script)}rem * var(--zk-arabic-scale, 1))`,
+            lineHeight: script === "indopak" ? 2.7 : 2.45,
+            color: C.text,
+            fontFeatureSettings: "'liga' 1, 'calt' 1",
+            textAlign: "center",
+            direction: "rtl",
+            padding: "20px 0 34px",
+            transition: "font-family 0.2s ease",
+          }}
+        >
+          {dua.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
+            <span
+              key={i}
+              className="zikir-word"
+              style={{ display: "inline-block", padding: "0 0.18em" }}
+            >
+              {word}
+            </span>
+          ))}
+        </div>
+
+        {!isNarrow && (
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignSelf: "center",
+            transform: "translateX(18px)",
+          }}>
+            <FontSizeSlider
+              zoom={zoom}
+              setZoom={setZoom}
+              accent={accent}
+              vertical
+            />
+          </div>
+        )}
       </div>
 
       {/* Script selector — small, discreet, sits right under the Arabic block */}
@@ -897,81 +892,129 @@ function ScriptSelector({ script, setScript, accent }) {
 //   • horizontal (default)          — mobile, inline below the script selector
 // The accent prop themes the thumb color and its glow.
 function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
+  const pctRef = useRef(null);
+
   const cssVars = {
     "--zk-accent": accent,
     "--zk-accent-glow": rgba(accent, 0.4),
   };
 
+  const applyZoomLive = (raw) => {
+    const n = Math.min(175, Math.max(75, Math.round(Number(raw))));
+    document.documentElement.style.setProperty("--zk-arabic-scale", n / 100);
+    if (pctRef.current) pctRef.current.textContent = `${n}%`;
+    return n;
+  };
+
+  const commitZoom = (e) => {
+    const n = applyZoomLive(e.currentTarget.value);
+    setZoom(n);
+  };
+
+  const input = (
+    <input
+      type="range"
+      min={75}
+      max={175}
+      step={1}
+      defaultValue={zoom}
+      onInput={(e) => applyZoomLive(e.currentTarget.value)}
+      onMouseUp={commitZoom}
+      onTouchEnd={commitZoom}
+      onKeyUp={commitZoom}
+      className={`zk-slider ${vertical ? "v" : "h"}`}
+      aria-label="Arabic font size"
+      style={vertical ? undefined : { flex: 1 }}
+    />
+  );
+
   if (vertical) {
-    // Vertical: a tight stack containing a label, the rotated track, and the
-    // current percentage. Total footprint is narrow so it docks cleanly.
     return (
       <div style={{
         ...cssVars,
-        display: "flex", flexDirection: "column", alignItems: "center",
-        gap: 14, userSelect: "none",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 14,
+        userSelect: "none",
       }}>
         <span style={{
-          fontFamily: BODY, fontSize: 9.5, color: C.textFaint,
-          letterSpacing: "0.18em", textTransform: "uppercase",
-          writingMode: "vertical-rl", transform: "rotate(180deg)",
+          fontFamily: BODY,
+          fontSize: 9.5,
+          color: C.textFaint,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          writingMode: "vertical-rl",
+          transform: "rotate(180deg)",
         }}>
           Size
         </span>
-        {/* The rotated track lives inside a fixed-height container so the
-            rotation doesn't break the parent flow. */}
+
         <div style={{
-          height: 160, display: "flex", alignItems: "center", justifyContent: "center",
+          height: 180,
+          width: 32,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}>
-          <input
-            type="range"
-            min={75} max={175} step={1}
-            value={zoom}
-            onChange={(e) => setZoom(parseInt(e.target.value, 10))}
-            className="zk-slider v"
-            aria-label="Arabic font size"
-          />
+          {input}
         </div>
-        <span style={{
-          fontFamily: BODY, fontSize: 11, color: accent,
-          letterSpacing: "0.04em", fontVariantNumeric: "tabular-nums",
-          minWidth: 38, textAlign: "center",
-        }}>
+
+        <span
+          ref={pctRef}
+          style={{
+            fontFamily: BODY,
+            fontSize: 11,
+            color: accent,
+            letterSpacing: "0.04em",
+            fontVariantNumeric: "tabular-nums",
+            minWidth: 38,
+            textAlign: "center",
+          }}
+        >
           {zoom}%
         </span>
       </div>
     );
   }
 
-  // Horizontal: inline row with a label on the left, slider in the middle,
-  // and the current percentage on the right.
   return (
     <div style={{
       ...cssVars,
-      display: "flex", alignItems: "center", gap: 14,
-      marginBottom: 18, padding: "0 4px",
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+      margin: "12px auto 22px",
+      padding: "0 4px",
+      maxWidth: 460,
+      width: "100%",
     }}>
       <span style={{
-        fontFamily: BODY, fontSize: 10, color: C.textFaint,
-        letterSpacing: "0.12em", textTransform: "uppercase",
+        fontFamily: BODY,
+        fontSize: 10,
+        color: C.textFaint,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
         flexShrink: 0,
       }}>
         Size
       </span>
-      <input
-        type="range"
-        min={75} max={175} step={1}
-        value={zoom}
-        onChange={(e) => setZoom(parseInt(e.target.value, 10))}
-        className="zk-slider h"
-        style={{ flex: 1 }}
-        aria-label="Arabic font size"
-      />
-      <span style={{
-        fontFamily: BODY, fontSize: 11, color: accent,
-        letterSpacing: "0.04em", fontVariantNumeric: "tabular-nums",
-        flexShrink: 0, minWidth: 38, textAlign: "right",
-      }}>
+
+      {input}
+
+      <span
+        ref={pctRef}
+        style={{
+          fontFamily: BODY,
+          fontSize: 11,
+          color: accent,
+          letterSpacing: "0.04em",
+          fontVariantNumeric: "tabular-nums",
+          flexShrink: 0,
+          minWidth: 38,
+          textAlign: "right",
+        }}
+      >
         {zoom}%
       </span>
     </div>
@@ -1112,27 +1155,6 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
 
   return (
     <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto" }}>
-      {/* Desktop-only vertical rail. See DuaDetail for the rationale. */}
-      {!isNarrow && (
-        <div style={{
-          position: "absolute",
-          top: 160,
-          left: "calc(100% + 32px)",
-          height: 280,
-        }}>
-          <div style={{
-            position: "sticky",
-            top: 180,
-          }}>
-            <FontSizeSlider
-              zoom={zoom}
-              setZoom={setZoom}
-              accent={accent}
-              vertical
-            />
-          </div>
-        </div>
-      )}
       <div style={{
         fontFamily: BODY, fontSize: 12.5, color: accent,
         letterSpacing: "0.02em", marginBottom: 6,
@@ -1225,16 +1247,46 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
         </div>
       </div>
 
-      {steps.map((s, i) => (
-        <RoutineStep
-          key={s.id}
-          step={s} idx={i}
-          count={counts[i]} target={s.count}
-          onTap={() => tap(i)}
-          accent={accent} lang={lang} showT={showT} script={script}
-          isLast={i === steps.length - 1}
-        />
-      ))}
+      {/* Steps + co-located desktop slider. Same grid pattern as DuaDetail,
+          but the slider sits sticky at the top of the steps column rather
+          than centered — routines can be tall, and a center alignment would
+          push the slider far below the fold. */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isNarrow ? "1fr" : "minmax(0, 1fr) 72px",
+        alignItems: "start",
+        columnGap: isNarrow ? 0 : 56,
+      }}>
+        <div>
+          {steps.map((s, i) => (
+            <RoutineStep
+              key={s.id}
+              step={s} idx={i}
+              count={counts[i]} target={s.count}
+              onTap={() => tap(i)}
+              accent={accent} lang={lang} showT={showT} script={script}
+              isLast={i === steps.length - 1}
+            />
+          ))}
+        </div>
+
+        {!isNarrow && (
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            position: "sticky",
+            top: 80,
+            transform: "translateX(18px)",
+          }}>
+            <FontSizeSlider
+              zoom={zoom}
+              setZoom={setZoom}
+              accent={accent}
+              vertical
+            />
+          </div>
+        )}
+      </div>
 
       {allDone && (
         <div className="fadeIn" style={{
