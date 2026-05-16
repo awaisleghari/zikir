@@ -8,7 +8,37 @@ import TAXONOMY       from "./content/taxonomy.json";
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
 const STYLE = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Amiri:wght@400;700&family=Amiri+Quran&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Amiri:wght@400;700&family=Amiri+Quran&display=swap');
+
+  /* ─── Quran scripts ────────────────────────────────────────────────────────
+     Loaded directly from Quran Foundation's CDN — the same source Quran.com
+     uses for its rendering. Three scripts are wired up:
+
+       • Uthmani  — KFGQPC Uthmanic Hafs (the official Madani script)
+       • IndoPak  — Indopak Nastaleeq (the South Asian standard, Nastaleeq cut)
+       • Tajweed  — currently aliases to Uthmani Hafs. True Tajweed rendering
+                    requires letter-level color-coded markup of the source
+                    text, which Quran.com receives from its API. Our duas are
+                    plain Unicode Arabic, so colored Tajweed isn't achievable
+                    on this data without manual encoding by a qari/expert.
+                    Selecting Tajweed therefore shows the Uthmani font with
+                    a discreet note in the UI explaining the limitation.
+     Each font is loaded with font-display: swap so the page never blocks
+     waiting for them. */
+
+  @font-face {
+    font-family: 'UthmanicHafs';
+    src: url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2') format('woff2'),
+         url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.ttf') format('truetype');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'IndopakNastaleeq';
+    src: url('https://verses.quran.foundation/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2') format('woff2'),
+         url('https://verses.quran.foundation/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff') format('woff'),
+         url('https://verses.quran.foundation/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.ttf') format('truetype');
+    font-display: swap;
+  }
 
   @keyframes fadeUp   { from { opacity: 0; transform: translateY(8px); }  to { opacity: 1; transform: translateY(0); } }
   @keyframes fadeIn   { from { opacity: 0; }                              to { opacity: 1; } }
@@ -68,9 +98,45 @@ const LENS_COLOR = {
   routines: "#7f5af0",
 };
 
-const SERIF  = "'Cormorant Garamond', 'Lora', Georgia, serif";
-const BODY   = "'Lora', Georgia, serif";
-const ARABIC = "'Amiri Quran', 'Amiri', 'Scheherazade New', serif";
+const SERIF  = "'Cormorant Garamond', Georgia, serif";
+const BODY   = "'Source Serif 4', Georgia, serif";
+
+// Urdu translations always render with Amiri — never Uthmani Hafs, which is
+// designed exclusively for Quranic Arabic and lacks Urdu-specific glyphs.
+const ARABIC_URDU = "'Amiri Quran', 'Amiri', 'Scheherazade New', serif";
+
+// The Arabic font for dua text is driven by the user's script preference.
+// Falls back through the loaded Quran Foundation fonts to Amiri to the
+// system serif so something always renders even if remote fonts fail.
+const SCRIPTS = {
+  uthmani: {
+    id: "uthmani",
+    label: "Uthmani",
+    sublabel: "KFGQPC Hafs",
+    font: "'UthmanicHafs', 'Amiri Quran', 'Amiri', serif",
+  },
+  indopak: {
+    id: "indopak",
+    label: "IndoPak",
+    sublabel: "Nastaleeq",
+    font: "'IndopakNastaleeq', 'Amiri', 'Scheherazade New', serif",
+  },
+  tajweed: {
+    id: "tajweed",
+    label: "Tajweed",
+    sublabel: "Uthmani base",
+    font: "'UthmanicHafs', 'Amiri Quran', 'Amiri', serif",
+    note: "True color-coded Tajweed needs letter-level rule encoding of each dua — work that requires a qari's review. Until then, Tajweed mode renders in the Uthmani script.",
+  },
+};
+
+const arabicFont = (script) => (SCRIPTS[script] || SCRIPTS.uthmani).font;
+
+// IndoPak Nastaleeq renders best at a slightly larger size due to its
+// stacked Nastaleeq baseline. This multiplier is applied to every Arabic
+// font-size in the app when the script is IndoPak, so the user doesn't
+// see the text shrink visually when they switch scripts.
+const arabicScale = (script) => (script === "indopak" ? 1.18 : 1);
 
 // ─── Taxonomy lookups (built once from JSON) ─────────────────────────────────
 
@@ -292,7 +358,7 @@ function DuaListItem({ dua, selected, onClick }) {
   );
 }
 
-function RoutineListItem({ routine, selected, onClick }) {
+function RoutineListItem({ routine, selected, onClick, script }) {
   const [hov, setHov] = useState(false);
   const col = routine.color;
   return (
@@ -314,7 +380,8 @@ function RoutineListItem({ routine, selected, onClick }) {
     >
       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
         <span style={{
-          fontFamily: ARABIC, fontSize: "1.1rem", color: col, lineHeight: 1,
+          fontFamily: arabicFont(script), fontSize: `${1.1 * arabicScale(script)}rem`,
+          color: col, lineHeight: 1,
         }}>
           {routine.arabic}
         </span>
@@ -343,7 +410,7 @@ function RoutineListItem({ routine, selected, onClick }) {
 
 function Sidebar({
   lens, setLens, groups, openGroup, setOpenGroup,
-  selected, onSelectDua, onSelectRoutine, isNarrow,
+  selected, onSelectDua, onSelectRoutine, isNarrow, script,
 }) {
   return (
     <div style={{
@@ -364,7 +431,7 @@ function Sidebar({
             Zikir
           </span>
           <span style={{
-            fontFamily: ARABIC, fontSize: "1.25rem", color: C.textSub,
+            fontFamily: ARABIC_URDU, fontSize: "1.25rem", color: C.textSub,
             marginLeft: "auto", opacity: 0.8,
           }}>
             ذِكْر
@@ -413,6 +480,7 @@ function Sidebar({
                 routine={r}
                 selected={selected?.type === "routine" && selected.id === r.id}
                 onClick={() => onSelectRoutine(r)}
+                script={script}
               />
             ))
           : groups.map(g => (
@@ -444,10 +512,11 @@ function Sidebar({
   );
 }
 
-function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT, ttsOk }) {
+function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT, ttsOk, script, setScript }) {
   const accent = duaColor(dua);
   const isUr = lang === "ur";
   const translation = translateOf(dua, lang);
+  const scriptInfo = SCRIPTS[script] || SCRIPTS.uthmani;
 
   return (
     <div className="detailIn" style={{ maxWidth: 620, margin: "0 auto" }}>
@@ -487,19 +556,42 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
           border: `1px solid ${speaking ? rgba(accent, 0.6) : C.line}`,
           borderRadius: 18,
           padding: "34px 28px",
-          marginBottom: 18,
+          marginBottom: 14,
           textAlign: "center",
           direction: "rtl",
           transition: "border-color 0.3s",
         }}
       >
         <div style={{
-          fontFamily: ARABIC, fontSize: "2.2rem", lineHeight: 2.45,
+          fontFamily: arabicFont(script),
+          fontSize: `${2.2 * arabicScale(script)}rem`,
+          lineHeight: script === "indopak" ? 2.7 : 2.45,
           color: C.text, fontFeatureSettings: "'liga' 1, 'calt' 1",
+          transition: "font-family 0.2s ease",
         }}>
           {dua.arabic}
         </div>
       </div>
+
+      {/* Script selector — small, discreet, sits right under the Arabic block */}
+      <ScriptSelector
+        script={script}
+        setScript={setScript}
+        accent={accent}
+      />
+
+      {scriptInfo.note && (
+        <div style={{
+          fontFamily: BODY, fontSize: 11.5, color: C.textFaint,
+          lineHeight: 1.55, marginBottom: 16,
+          padding: "8px 14px",
+          background: rgba(accent, 0.05),
+          border: `1px solid ${rgba(accent, 0.18)}`,
+          borderRadius: 10,
+        }}>
+          {scriptInfo.note}
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
         <button
@@ -545,7 +637,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
                 padding: "8px 14px", cursor: "pointer",
                 color: lang === l.id ? C.text : C.textFaint,
                 fontSize: 12, fontWeight: lang === l.id ? 600 : 400,
-                fontFamily: l.id === "ur" ? ARABIC : BODY,
+                fontFamily: l.id === "ur" ? ARABIC_URDU : BODY,
               }}
             >
               {l.label}
@@ -554,22 +646,28 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         </div>
       </div>
 
+      {/* Transliteration — roman (not italic), slightly muted color for
+          differentiation. Source Serif 4 holds up well at this size. */}
       {showT && (
         <div style={{
-          fontSize: 14.5, color: C.textSub, fontStyle: "italic",
-          fontFamily: SERIF, lineHeight: 1.85, marginBottom: 18,
+          fontSize: 15, color: C.textSub,
+          fontFamily: BODY, lineHeight: 1.75, marginBottom: 18,
           padding: "14px 0",
           borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}`,
+          letterSpacing: "0.005em",
         }}>
           {dua.translit}
         </div>
       )}
 
+      {/* Translation — roman, near-white, regular weight. The translation is
+          the meaning; it earns full readability. Italic stays reserved for
+          editorial tone (the use-context line, the tagline). */}
       <div style={{
-        fontSize: isUr ? 18 : 16.5, color: C.text, lineHeight: 1.85,
+        fontSize: isUr ? 18 : 17, color: C.text, lineHeight: 1.75,
         marginBottom: 24, direction: isUr ? "rtl" : "ltr",
-        fontFamily: isUr ? ARABIC : SERIF,
-        fontStyle: isUr ? "normal" : "italic", fontWeight: 400,
+        fontFamily: isUr ? ARABIC_URDU : BODY,
+        fontWeight: 400,
       }}>
         {translation}
       </div>
@@ -600,7 +698,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
       {!ttsOk && (
         <div style={{
           marginTop: 16, fontSize: 11, color: C.textFaint, fontFamily: BODY,
-          fontStyle: "italic", textAlign: "center",
+          textAlign: "center",
         }}>
           Arabic voice is not available on this device.
         </div>
@@ -609,7 +707,53 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
   );
 }
 
-function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT }) {
+// Small horizontal selector for Quran script. Used inside DuaDetail and
+// RoutineDetail. Visually quiet — three labels in a pill row, themed to the
+// current accent.
+function ScriptSelector({ script, setScript, accent }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "center",
+      gap: 6, marginBottom: 18,
+    }}>
+      <span style={{
+        fontFamily: BODY, fontSize: 10, color: C.textFaint,
+        letterSpacing: "0.12em", textTransform: "uppercase",
+        marginRight: 4,
+      }}>
+        Script
+      </span>
+      {Object.values(SCRIPTS).map((s, i, all) => {
+        const active = s.id === script;
+        return (
+          <button
+            key={s.id}
+            onClick={() => setScript(s.id)}
+            title={s.sublabel}
+            style={{
+              background: active ? rgba(accent, 0.14) : "transparent",
+              border: `1px solid ${active ? rgba(accent, 0.5) : C.line}`,
+              borderLeft: i > 0 ? "none" : `1px solid ${active ? rgba(accent, 0.5) : C.line}`,
+              borderRadius:
+                i === 0 ? "999px 0 0 999px" :
+                i === all.length - 1 ? "0 999px 999px 0" : 0,
+              padding: "6px 12px",
+              cursor: "pointer",
+              color: active ? C.text : C.textFaint,
+              fontSize: 11.5, fontWeight: active ? 600 : 400,
+              fontFamily: BODY, letterSpacing: "0.02em",
+              transition: "all 0.15s",
+            }}
+          >
+            {s.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, script }) {
   const done = count >= target;
   const isUr = lang === "ur";
   return (
@@ -672,30 +816,33 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT }) {
       </div>
 
       <div style={{
-        fontFamily: ARABIC, fontSize: "1.6rem", lineHeight: 2.2,
+        fontFamily: arabicFont(script),
+        fontSize: `${1.6 * arabicScale(script)}rem`,
+        lineHeight: script === "indopak" ? 2.4 : 2.2,
         direction: "rtl", textAlign: "center", color: C.text,
         marginBottom: showT ? 10 : 6,
         fontFeatureSettings: "'liga' 1, 'calt' 1",
+        transition: "font-family 0.2s ease",
       }}>
         {step.arabic}
       </div>
 
       {showT && (
         <div style={{
-          fontFamily: SERIF, fontSize: 13, color: C.textSub, fontStyle: "italic",
+          fontFamily: BODY, fontSize: 13, color: C.textSub,
           textAlign: "center", lineHeight: 1.7, marginBottom: 8,
+          letterSpacing: "0.005em",
         }}>
           {step.translit}
         </div>
       )}
 
       <div style={{
-        fontFamily: isUr ? ARABIC : SERIF,
-        fontSize: isUr ? 15 : 13.5,
+        fontFamily: isUr ? ARABIC_URDU : BODY,
+        fontSize: isUr ? 15 : 14,
         color: C.textMuted, lineHeight: 1.7,
         textAlign: "center",
         direction: isUr ? "rtl" : "ltr",
-        fontStyle: isUr ? "normal" : "italic",
         maxWidth: 480, margin: "0 auto",
       }}>
         {translateOf(step, lang)}
@@ -711,7 +858,7 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT }) {
   );
 }
 
-function RoutineDetail({ routine, lang, setLang, showT, setShowT }) {
+function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScript }) {
   const steps = routine.steps.map(resolveStep);
   const [counts, setCounts] = useState(steps.map(() => 0));
   const accent = routine.color;
@@ -746,8 +893,9 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT }) {
           {routine.title}
         </h2>
         <span style={{
-          fontFamily: ARABIC, fontSize: "1.5rem", color: accent,
-          marginLeft: "auto", lineHeight: 1,
+          fontFamily: arabicFont(script),
+          fontSize: `${1.5 * arabicScale(script)}rem`,
+          color: accent, marginLeft: "auto", lineHeight: 1,
         }}>
           {routine.arabic}
         </span>
@@ -770,7 +918,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT }) {
       </div>
       <div style={{
         height: 5, borderRadius: 999, background: C.surface,
-        marginBottom: 14, overflow: "hidden",
+        marginBottom: 18, overflow: "hidden",
       }}>
         <div style={{
           height: "100%", width: `${(completed / steps.length) * 100}%`,
@@ -779,6 +927,8 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT }) {
           transition: "width 0.4s cubic-bezier(0.16,1,0.3,1)",
         }} />
       </div>
+
+      <ScriptSelector script={script} setScript={setScript} accent={accent} />
 
       <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
         <button
@@ -804,7 +954,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT }) {
                 padding: "7px 13px", cursor: "pointer",
                 color: lang === l.id ? C.text : C.textFaint,
                 fontSize: 11.5, fontWeight: lang === l.id ? 600 : 400,
-                fontFamily: l.id === "ur" ? ARABIC : BODY,
+                fontFamily: l.id === "ur" ? ARABIC_URDU : BODY,
               }}
             >
               {l.label}
@@ -819,7 +969,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT }) {
           step={s} idx={i}
           count={counts[i]} target={s.count}
           onTap={() => tap(i)}
-          accent={accent} lang={lang} showT={showT}
+          accent={accent} lang={lang} showT={showT} script={script}
         />
       ))}
 
@@ -831,7 +981,9 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT }) {
           marginTop: 4,
         }}>
           <div style={{
-            fontFamily: ARABIC, fontSize: "1.5rem", color: accent, marginBottom: 6,
+            fontFamily: arabicFont(script),
+            fontSize: `${1.5 * arabicScale(script)}rem`,
+            color: accent, marginBottom: 6,
           }}>
             تَقَبَّلَ ٱللَّهُ
           </div>
@@ -852,11 +1004,13 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT }) {
   );
 }
 
-function Welcome({ setLens }) {
+function Welcome({ setLens, script }) {
   return (
     <div className="detailIn" style={{ maxWidth: 560, margin: "0 auto", textAlign: "center" }}>
       <div style={{
-        fontFamily: ARABIC, fontSize: "2.3rem", color: C.textSub,
+        fontFamily: arabicFont(script),
+        fontSize: `${2.3 * arabicScale(script)}rem`,
+        color: C.textSub,
         lineHeight: 1.8, marginBottom: 8,
       }}>
         ٱلدُّعَاءُ مُخُّ ٱلْعِبَادَةِ
@@ -940,6 +1094,21 @@ export default function App() {
   const [ttsOk, setTtsOk] = useState(true);
   const [isNarrow, setIsNarrow] = useState(false);
 
+  // Quran script preference. Persisted to localStorage so it survives reload.
+  // The lazy initializer reads from storage on first mount only.
+  const [script, setScriptRaw] = useState(() => {
+    if (typeof window === "undefined") return "uthmani";
+    try {
+      const stored = window.localStorage.getItem("zikir.script");
+      if (stored && SCRIPTS[stored]) return stored;
+    } catch {}
+    return "uthmani";
+  });
+  const setScript = (s) => {
+    setScriptRaw(s);
+    try { window.localStorage.setItem("zikir.script", s); } catch {}
+  };
+
   useEffect(() => {
     const s = document.createElement("style");
     s.textContent = STYLE;
@@ -994,7 +1163,7 @@ export default function App() {
       : duaColor(selected.dua);
 
   const DetailBody = () => {
-    if (!selected) return <Welcome setLens={setLens} />;
+    if (!selected) return <Welcome setLens={setLens} script={script} />;
     if (selected.type === "routine") {
       return (
         <RoutineDetail
@@ -1002,6 +1171,7 @@ export default function App() {
           routine={selected.routine}
           lang={lang} setLang={setLang}
           showT={showT} setShowT={setShowT}
+          script={script} setScript={setScript}
         />
       );
     }
@@ -1011,6 +1181,7 @@ export default function App() {
         lang={lang} setLang={setLang}
         speaking={speaking} speak={speak} stop={stop}
         showT={showT} setShowT={setShowT} ttsOk={ttsOk}
+        script={script} setScript={setScript}
       />
     );
   };
@@ -1090,6 +1261,7 @@ export default function App() {
         onSelectDua={selectDua}
         onSelectRoutine={selectRoutine}
         isNarrow={isNarrow}
+        script={script}
       />
       {!isNarrow && detailPane(false)}
       {isNarrow && selected && detailPane(true)}
