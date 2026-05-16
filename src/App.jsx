@@ -120,8 +120,8 @@ const STYLE = `
   .zk-slider.v {
     writing-mode: vertical-lr;
     direction: rtl;            /* so larger values are at the top */
-    width: 18px;
-    height: 160px;
+    width: 28px;
+    height: 240px;
   }
   .zk-slider.v::-webkit-slider-runnable-track {
     width: 2px;
@@ -142,22 +142,22 @@ const STYLE = `
   .zk-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 999px;
     background: var(--zk-accent, #b8c1ec);
     border: none;
-    margin-top: -7px;          /* horizontal: pull up onto the 2px track */
+    margin-top: -9px;          /* horizontal: pull up onto the 2px track */
     box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 10px var(--zk-accent-glow, transparent);
     transition: box-shadow 0.2s ease;
   }
   .zk-slider.v::-webkit-slider-thumb {
     margin-top: 0;
-    margin-left: -7px;         /* vertical: pull left onto the 2px track */
+    margin-left: -9px;         /* vertical: pull left onto the 2px track */
   }
   .zk-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 999px;
     background: var(--zk-accent, #b8c1ec);
     border: none;
@@ -171,6 +171,23 @@ const STYLE = `
   .zk-slider:hover::-moz-range-thumb,
   .zk-slider:active::-moz-range-thumb {
     box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 18px var(--zk-accent, #b8c1ec);
+  }
+
+  /* Active drag state — a translucent halo around the thumb confirms the
+     slider is captured, even if the cursor drifts slightly off the rail
+     during a fast drag. The browser captures the pointer correctly the
+     whole time; this is the *visual* anchor that makes that obvious. */
+  .zk-slider.is-dragging::-webkit-slider-thumb {
+    box-shadow:
+      0 0 0 6px rgba(255,255,255,0.08),
+      0 0 0 1px rgba(0,0,0,0.4),
+      0 0 22px var(--zk-accent, #b8c1ec);
+  }
+  .zk-slider.is-dragging::-moz-range-thumb {
+    box-shadow:
+      0 0 0 6px rgba(255,255,255,0.08),
+      0 0 0 1px rgba(0,0,0,0.4),
+      0 0 22px var(--zk-accent, #b8c1ec);
   }
 
   /* ─── Glass controls ─────────────────────────────────────────────────
@@ -892,7 +909,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
             display: "flex",
             justifyContent: "center",
             alignSelf: "center",
-            transform: "translateX(18px)",
+            transform: "translateX(28px)",
           }}>
             <FontSizeSlider
               zoom={zoom}
@@ -1134,6 +1151,7 @@ const LANG_OPTIONS = [
 // The accent prop themes the thumb color and its glow.
 function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
   const pctRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
 
   const cssVars = {
     "--zk-accent": accent,
@@ -1141,7 +1159,7 @@ function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
   };
 
   const applyZoomLive = (raw) => {
-    const n = Math.min(175, Math.max(75, Math.round(Number(raw))));
+    const n = Math.min(150, Math.max(80, Math.round(Number(raw))));
     document.documentElement.style.setProperty("--zk-arabic-scale", n / 100);
     if (pctRef.current) pctRef.current.textContent = `${n}%`;
     return n;
@@ -1155,15 +1173,18 @@ function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
   const input = (
     <input
       type="range"
-      min={75}
-      max={175}
+      min={80}
+      max={150}
       step={1}
       defaultValue={zoom}
+      onPointerDown={() => setDragging(true)}
+      onPointerUp={(e) => { setDragging(false); commitZoom(e); }}
+      onPointerCancel={() => setDragging(false)}
       onInput={(e) => applyZoomLive(e.currentTarget.value)}
       onMouseUp={commitZoom}
       onTouchEnd={commitZoom}
       onKeyUp={commitZoom}
-      className={`zk-slider ${vertical ? "v" : "h"}`}
+      className={`zk-slider ${vertical ? "v" : "h"} ${dragging ? "is-dragging" : ""}`}
       aria-label="Arabic font size"
       style={vertical ? undefined : { flex: 1 }}
     />
@@ -1192,8 +1213,8 @@ function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
         </span>
 
         <div style={{
-          height: 180,
-          width: 32,
+          height: 260,
+          width: 56,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -1521,7 +1542,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
             justifyContent: "center",
             position: "sticky",
             top: 80,
-            transform: "translateX(18px)",
+            transform: "translateX(28px)",
           }}>
             <FontSizeSlider
               zoom={zoom}
@@ -1680,12 +1701,12 @@ export default function App() {
     if (typeof window === "undefined") return 100;
     try {
       const n = parseInt(window.localStorage.getItem("zikir.zoom"), 10);
-      if (Number.isFinite(n) && n >= 75 && n <= 175) return n;
+      if (Number.isFinite(n) && n >= 80 && n <= 150) return n;
     } catch {}
     return 100;
   });
   const setZoom = (n) => {
-    const clamped = Math.min(175, Math.max(75, Math.round(n)));
+    const clamped = Math.min(150, Math.max(80, Math.round(n)));
     // Update the DOM immediately — no waiting for React's next paint.
     if (typeof document !== "undefined") {
       document.documentElement.style.setProperty("--zk-arabic-scale", clamped / 100);
