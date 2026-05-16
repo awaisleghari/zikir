@@ -978,20 +978,20 @@ function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
   );
 }
 
-function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, script }) {
+function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, script, isLast }) {
   const done = count >= target;
   const isUr = lang === "ur";
   return (
     <div style={{
-      background: C.surface,
-      border: `1px solid ${done ? rgba(accent, 0.5) : C.line}`,
-      borderRadius: 16,
-      padding: "20px 20px 22px",
-      marginBottom: 12,
-      transition: "border-color 0.25s ease",
-      position: "relative",
+      // No background, no border, no rounding. The step is a section, not a
+      // card. A faint divider below (except on the last step) gives just
+      // enough separation between consecutive steps without enclosing them.
+      padding: "28px 4px 36px",
+      borderBottom: isLast ? "none" : `1px solid ${rgba(C.textSub, 0.08)}`,
+      opacity: done ? 0.7 : 1,
+      transition: "opacity 0.3s ease",
     }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 20 }}>
         <span style={{
           fontFamily: BODY, fontSize: 11, color: C.textFaint,
           letterSpacing: "0.1em", marginTop: 3, flexShrink: 0,
@@ -1232,6 +1232,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
           count={counts[i]} target={s.count}
           onTap={() => tap(i)}
           accent={accent} lang={lang} showT={showT} script={script}
+          isLast={i === steps.length - 1}
         />
       ))}
 
