@@ -707,10 +707,6 @@ export default function ZikirLanding({ onEnter }) {
           </button>
         </div>
 
-        <div className="zk-footer">
-          Hover any star · ٱلْأَسْمَاءُ ٱلْحُسْنَى
-        </div>
-
         <div className="zk-veil" aria-hidden={!entered}>
           <div className="zk-veil-content">
             بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
