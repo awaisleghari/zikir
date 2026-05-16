@@ -38,15 +38,40 @@ const STYLE = `
   @keyframes fadeIn   { from { opacity: 0; }                              to { opacity: 1; } }
   @keyframes detailIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes drop     { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes speakPulse {
-    0%, 100% { box-shadow: 0 0 0 0 transparent; }
-    50%      { box-shadow: 0 0 0 9px var(--pulse); }
+
+  /* Each Arabic word floats with a faint accent-colored halo. Two layered
+     shadows: a tight nimbus that sits close to the letters, and a wider
+     gentle bloom that gives the word presence in the surrounding dark.
+     Both are very low opacity so the words read white-on-dark with a quiet
+     hue, not as colored text. */
+  .zikir-word {
+    text-shadow:
+      0 0 6px  var(--glow),
+      0 0 18px var(--glow-soft);
+    transition: text-shadow 0.4s ease;
+  }
+
+  /* During recitation: the halo gently expands and intensifies, then settles.
+     Slow, breath-like — never staccato. */
+  @keyframes wordBreathe {
+    0%, 100% {
+      text-shadow:
+        0 0 6px  var(--glow),
+        0 0 18px var(--glow-soft);
+    }
+    50% {
+      text-shadow:
+        0 0 10px var(--glow),
+        0 0 28px var(--glow);
+    }
+  }
+  .speaking-glow .zikir-word {
+    animation: wordBreathe 2.4s ease-in-out infinite;
   }
 
   .listitem  { animation: drop 0.22s ease both; }
   .detailIn  { animation: detailIn 0.34s cubic-bezier(0.16,1,0.3,1) both; }
   .fadeIn    { animation: fadeIn 0.3s ease both; }
-  .speaking  { animation: speakPulse 1.6s ease-in-out infinite; }
 
   .noscroll::-webkit-scrollbar { width: 0; height: 0; }
   .noscroll { scrollbar-width: none; }
@@ -537,29 +562,43 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         letterSpacing: "0.55em", marginBottom: 16, opacity: 0.55,
       }}>✦ ✦ ✦</div>
 
+      {/* Arabic — no container. Words float on the page, each carrying a
+          subtle accent-colored halo via text-shadow. The hue is the dua's
+          mood color at very low intensity, so words feel luminous rather
+          than tinted. On recitation, the halo gently pulses up and back. */}
       <div
-        className={speaking ? "speaking" : ""}
+        className={speaking ? "speaking-glow" : ""}
         style={{
-          "--pulse": rgba(accent, 0.18),
-          background: C.surface,
-          border: `1px solid ${speaking ? rgba(accent, 0.6) : C.line}`,
-          borderRadius: 18,
-          padding: "34px 28px",
-          marginBottom: 14,
-          textAlign: "center",
-          direction: "rtl",
-          transition: "border-color 0.3s",
-        }}
-      >
-        <div style={{
+          "--glow": rgba(accent, 0.45),
+          "--glow-soft": rgba(accent, 0.22),
           fontFamily: arabicFont(script),
           fontSize: `${2.2 * arabicScale(script)}rem`,
           lineHeight: script === "indopak" ? 2.7 : 2.45,
-          color: C.text, fontFeatureSettings: "'liga' 1, 'calt' 1",
+          color: C.text,
+          fontFeatureSettings: "'liga' 1, 'calt' 1",
+          textAlign: "center",
+          direction: "rtl",
+          padding: "20px 0 34px",
           transition: "font-family 0.2s ease",
-        }}>
-          {dua.arabic}
-        </div>
+        }}
+      >
+        {dua.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
+          // Each word renders inside its own span so the text-shadow halo
+          // belongs to the word, not the whole block — giving the floating
+          // quality. <wbr> after each word would force a break-here hint;
+          // we instead rely on natural Arabic line-break behaviour and use
+          // a thin space to keep word boundaries clean.
+          <span
+            key={i}
+            className="zikir-word"
+            style={{
+              display: "inline-block",
+              padding: "0 0.18em",
+            }}
+          >
+            {word}
+          </span>
+        ))}
       </div>
 
       {/* Script selector — small, discreet, sits right under the Arabic block */}
@@ -795,6 +834,8 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
       </div>
 
       <div style={{
+        "--glow": rgba(accent, 0.45),
+        "--glow-soft": rgba(accent, 0.22),
         fontFamily: arabicFont(script),
         fontSize: `${1.6 * arabicScale(script)}rem`,
         lineHeight: script === "indopak" ? 2.4 : 2.2,
@@ -803,7 +844,15 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
         fontFeatureSettings: "'liga' 1, 'calt' 1",
         transition: "font-family 0.2s ease",
       }}>
-        {step.arabic}
+        {step.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
+          <span
+            key={i}
+            className="zikir-word"
+            style={{ display: "inline-block", padding: "0 0.18em" }}
+          >
+            {word}
+          </span>
+        ))}
       </div>
 
       {showT && (
