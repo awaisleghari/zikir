@@ -50,5 +50,45 @@
       { "ref": "g2",     "count": 1 },
       { "ref": "durood", "count": 3 }
     ]
+  },
+  {
+    "id": "daily-affairs",
+    "title": "Daily Affairs",
+    "arabic": "وِرْدُ ٱلْيَوْمِ",
+    "color": "#2e9e6e",
+    "when": "Once a day — a sustained sitting of remembrance",
+    "desc": "A long sequence carried daily — salutations on the Prophet ﷺ braided through Quranic chapters and istighfār, with single recitations marking the passage between them.",
+    "steps": [
+      { "ref": "durood-shareef",  "count": 11  },
+      { "ref": "surah-kawthar",   "count": 101 },
+      { "ref": "durood-shareef",  "count": 11  },
+      { "ref": "istighfar-short", "count": 300 },
+      { "ref": "durood-shareef",  "count": 300 },
+      { "ref": "durood-shareef",  "count": 1   },
+      { "ref": "surah-ikhlas",    "count": 100 },
+      { "ref": "durood-shareef",  "count": 1   }
+    ]
+  },
+  {
+    "id": "daily-istighfar",
+    "title": "Daily Istighfār",
+    "arabic": "وِرْدُ ٱلِٱسْتِغْفَارِ",
+    "color": "#f5b14e",
+    "when": "Once a day — a hundred times turning back to Him",
+    "desc": "The Prophet ﷺ said he sought Allah's forgiveness more than seventy times each day. A simple daily return — said with attention, the heart softened by repetition.",
+    "steps": [
+      { "ref": "istighfar-short", "count": 100 }
+    ]
+  },
+  {
+    "id": "daily-durood",
+    "title": "Daily Durood",
+    "arabic": "وِرْدُ ٱلصَّلَاةِ عَلَى ٱلنَّبِيِّ",
+    "color": "#e88aa6",
+    "when": "Once a day — a hundred salutations on the Prophet ﷺ",
+    "desc": "A daily current of love and blessing sent to the Messenger ﷺ. \"Whoever sends one blessing upon me, Allah sends ten blessings upon him.\" (Sahih Muslim 408)",
+    "steps": [
+      { "ref": "durood-shareef", "count": 100 }
+    ]
   }
 ]

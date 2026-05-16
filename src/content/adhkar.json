@@ -11,6 +11,17 @@
     "source": "Sahih al-Bukhari 6306"
   },
   {
+    "id": "istighfar-short",
+    "title": "Istighfār — Seeking Forgiveness",
+    "arabic": "أَسْتَغْفِرُ ٱللَّهَ وَأَتُوبُ إِلَيْهِ",
+    "translit": "Astaghfirullāha wa atūbu ilayh",
+    "translations": {
+      "en": "I seek forgiveness from Allah and turn to Him in repentance.",
+      "ur": "میں اللہ سے بخشش مانگتا ہوں اور اسی کی طرف توبہ کرتا ہوں۔"
+    },
+    "source": "Sahih al-Bukhari 6307"
+  },
+  {
     "id": "durood",
     "title": "Durood Ibrāhīmī — Sending Blessings on the Prophet ﷺ",
     "arabic": "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ، اللَّهُمَّ بَارِكْ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا بَارَكْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ",
@@ -20,5 +31,38 @@
       "ur": "اے اللہ! محمد ﷺ اور آلِ محمد پر رحمت بھیج، جیسے تو نے ابراہیم اور آلِ ابراہیم پر بھیجی۔ بے شک تو قابلِ تعریف، بزرگ ہے۔ اے اللہ! محمد ﷺ اور آلِ محمد پر برکت نازل فرما، جیسے تو نے ابراہیم اور آلِ ابراہیم پر نازل کی۔ بے شک تو قابلِ تعریف، بزرگ ہے۔"
     },
     "source": "Sahih al-Bukhari 3370"
+  },
+  {
+    "id": "durood-shareef",
+    "title": "Durood Shareef — The Short Salutation",
+    "arabic": "ٱللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ",
+    "translit": "Allāhumma ṣalli ʿalā Muḥammadin wa ʿalā āli Muḥammad",
+    "translations": {
+      "en": "O Allah, send blessings upon Muhammad and upon the family of Muhammad.",
+      "ur": "اے اللہ! محمد ﷺ پر اور آلِ محمد پر رحمت بھیج۔"
+    },
+    "source": "Sahih al-Bukhari 3370 (opening line of Durood Ibrāhīmī)"
+  },
+  {
+    "id": "surah-kawthar",
+    "title": "Sūrah al-Kawthar — The Abundance",
+    "arabic": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ۝ إِنَّآ أَعْطَيْنَٰكَ ٱلْكَوْثَرَ ۝ فَصَلِّ لِرَبِّكَ وَٱنْحَرْ ۝ إِنَّ شَانِئَكَ هُوَ ٱلْأَبْتَرُ ۝",
+    "translit": "Bismillāhir-Raḥmānir-Raḥīm. Innā aʿṭaynāka-l-Kawthar. Fa-ṣalli li-Rabbika wanḥar. Inna shāniʾaka huwa-l-abtar.",
+    "translations": {
+      "en": "In the name of Allah, the Most Merciful, the Bestower of mercy. Indeed, We have granted you abundance. So pray to your Lord and sacrifice. Indeed, your enemy is the one cut off.",
+      "ur": "اللہ کے نام سے جو نہایت مہربان، رحم کرنے والا ہے۔ بے شک ہم نے تمہیں کوثر عطا کی۔ پس اپنے رب کے لیے نماز پڑھ اور قربانی دے۔ بے شک تیرا دشمن ہی جڑ کٹا ہے۔"
+    },
+    "source": "Quran 108:1–3"
+  },
+  {
+    "id": "surah-ikhlas",
+    "title": "Sūrah al-Ikhlāṣ — The Sincerity",
+    "arabic": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ۝ قُلْ هُوَ ٱللَّهُ أَحَدٌ ۝ ٱللَّهُ ٱلصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ ۝",
+    "translit": "Bismillāhir-Raḥmānir-Raḥīm. Qul huwa-Llāhu Aḥad. Allāhu-ṣ-Ṣamad. Lam yalid wa lam yūlad. Wa lam yakun lahū kufuwan aḥad.",
+    "translations": {
+      "en": "In the name of Allah, the Most Merciful, the Bestower of mercy. Say: He is Allah, the One. Allah, the Eternal Refuge. He neither begets nor is born, and there is none equal to Him.",
+      "ur": "اللہ کے نام سے جو نہایت مہربان، رحم کرنے والا ہے۔ کہہ دو: وہ اللہ ایک ہے۔ اللہ بے نیاز ہے۔ نہ اس نے کسی کو جنا، نہ وہ جنا گیا، اور کوئی اس کے برابر نہیں۔"
+    },
+    "source": "Quran 112:1–4"
   }
 ]
