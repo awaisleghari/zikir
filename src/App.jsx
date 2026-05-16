@@ -615,11 +615,33 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
   const accent = duaColor(dua);
   const isUr = lang === "ur";
   const translation = translateOf(dua, lang);
-  const z = zoom / 100;
 
   return (
-    <div className="detailIn" style={{ maxWidth: 620, margin: "0 auto" }}>
-      <div style={{
+    <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto" }}>
+      {/* Desktop-only vertical rail. Absolutely positioned to the right of the
+          620px content column, sticky-anchored so it stays in view while the
+          user scrolls through the dua. The top offset is tuned so the rail's
+          center aligns with the Arabic block on initial view. */}
+      {!isNarrow && (
+        <div style={{
+          position: "absolute",
+          top: 220,
+          left: "calc(100% + 32px)",
+          height: 280,
+        }}>
+          <div style={{
+            position: "sticky",
+            top: 180,
+          }}>
+            <FontSizeSlider
+              zoom={zoom}
+              setZoom={setZoom}
+              accent={accent}
+              vertical
+            />
+          </div>
+        </div>
+      )}      <div style={{
         fontFamily: BODY, fontSize: 12.5, color: accent,
         letterSpacing: "0.02em", marginBottom: 6,
         display: "flex", alignItems: "center", gap: 8,
@@ -657,14 +679,14 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
           "--glow": rgba(accent, 0.45),
           "--glow-soft": rgba(accent, 0.22),
           fontFamily: arabicFont(script),
-          fontSize: `${2.2 * arabicScale(script) * z}rem`,
+          fontSize: `calc(${2.2 * arabicScale(script)}rem * var(--zk-arabic-scale, 1))`,
           lineHeight: script === "indopak" ? 2.7 : 2.45,
           color: C.text,
           fontFeatureSettings: "'liga' 1, 'calt' 1",
           textAlign: "center",
           direction: "rtl",
           padding: "20px 0 34px",
-          transition: "font-family 0.2s ease, font-size 0.18s ease",
+          transition: "font-family 0.2s ease",
         }}
       >
         {dua.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
@@ -948,10 +970,9 @@ function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
   );
 }
 
-function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, script, zoom }) {
+function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, script }) {
   const done = count >= target;
   const isUr = lang === "ur";
-  const z = zoom / 100;
   return (
     <div style={{
       background: C.surface,
@@ -1015,12 +1036,12 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
         "--glow": rgba(accent, 0.45),
         "--glow-soft": rgba(accent, 0.22),
         fontFamily: arabicFont(script),
-        fontSize: `${1.6 * arabicScale(script) * z}rem`,
+        fontSize: `calc(${1.6 * arabicScale(script)}rem * var(--zk-arabic-scale, 1))`,
         lineHeight: script === "indopak" ? 2.4 : 2.2,
         direction: "rtl", textAlign: "center", color: C.text,
         marginBottom: showT ? 10 : 6,
         fontFeatureSettings: "'liga' 1, 'calt' 1",
-        transition: "font-family 0.2s ease, font-size 0.18s ease",
+        transition: "font-family 0.2s ease",
       }}>
         {step.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
           <span
@@ -1069,7 +1090,6 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
   const steps = routine.steps.map(resolveStep);
   const [counts, setCounts] = useState(steps.map(() => 0));
   const accent = routine.color;
-  const z = zoom / 100;
 
   const tap = (i) => {
     setCounts(prev => {
@@ -1083,7 +1103,28 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
   const allDone = completed === steps.length;
 
   return (
-    <div className="detailIn" style={{ maxWidth: 620, margin: "0 auto" }}>
+    <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto" }}>
+      {/* Desktop-only vertical rail. See DuaDetail for the rationale. */}
+      {!isNarrow && (
+        <div style={{
+          position: "absolute",
+          top: 160,
+          left: "calc(100% + 32px)",
+          height: 280,
+        }}>
+          <div style={{
+            position: "sticky",
+            top: 180,
+          }}>
+            <FontSizeSlider
+              zoom={zoom}
+              setZoom={setZoom}
+              accent={accent}
+              vertical
+            />
+          </div>
+        </div>
+      )}
       <div style={{
         fontFamily: BODY, fontSize: 12.5, color: accent,
         letterSpacing: "0.02em", marginBottom: 6,
@@ -1102,9 +1143,8 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
         </h2>
         <span style={{
           fontFamily: arabicFont(script),
-          fontSize: `${1.5 * arabicScale(script) * z}rem`,
+          fontSize: `calc(${1.5 * arabicScale(script)}rem * var(--zk-arabic-scale, 1))`,
           color: accent, marginLeft: "auto", lineHeight: 1,
-          transition: "font-size 0.18s ease",
         }}>
           {routine.arabic}
         </span>
@@ -1184,7 +1224,6 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
           count={counts[i]} target={s.count}
           onTap={() => tap(i)}
           accent={accent} lang={lang} showT={showT} script={script}
-          zoom={zoom}
         />
       ))}
 
@@ -1197,7 +1236,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
         }}>
           <div style={{
             fontFamily: arabicFont(script),
-            fontSize: `${1.5 * arabicScale(script) * z}rem`,
+            fontSize: `calc(${1.5 * arabicScale(script)}rem * var(--zk-arabic-scale, 1))`,
             color: accent, marginBottom: 6,
           }}>
             تَقَبَّلَ ٱللَّهُ
@@ -1324,9 +1363,14 @@ export default function App() {
     try { window.localStorage.setItem("zikir.script", s); } catch {}
   };
 
-  // Arabic-text zoom preference. 100 = baseline. Range clamped to 75–175 so
-  // it never goes absurd in either direction. Persisted like the script.
-  const [zoom, setZoomRaw] = useState(() => {
+  // Arabic-text zoom preference. 100 = baseline. Range clamped to 75–175.
+  // The actual font-size change is driven by a CSS variable on <html> that
+  // we write directly on every slider drag — bypassing React's render cycle
+  // entirely, so dragging the slider doesn't cause the rest of the detail
+  // pane to re-render or "blink". React state is kept in sync (for the
+  // percentage display and persistence), but localStorage writes are
+  // debounced so dragging doesn't hammer storage.
+  const [zoom, setZoomState] = useState(() => {
     if (typeof window === "undefined") return 100;
     try {
       const n = parseInt(window.localStorage.getItem("zikir.zoom"), 10);
@@ -1336,9 +1380,26 @@ export default function App() {
   });
   const setZoom = (n) => {
     const clamped = Math.min(175, Math.max(75, Math.round(n)));
-    setZoomRaw(clamped);
-    try { window.localStorage.setItem("zikir.zoom", String(clamped)); } catch {}
+    // Update the DOM immediately — no waiting for React's next paint.
+    if (typeof document !== "undefined") {
+      document.documentElement.style.setProperty("--zk-arabic-scale", clamped / 100);
+    }
+    setZoomState(clamped);
   };
+
+  // Apply the CSS variable on first mount + on every committed zoom change,
+  // so a fresh page load or HMR reload picks up the stored value.
+  useEffect(() => {
+    document.documentElement.style.setProperty("--zk-arabic-scale", zoom / 100);
+  }, [zoom]);
+
+  // Debounce localStorage so rapid drags don't trigger a write on every frame.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try { window.localStorage.setItem("zikir.zoom", String(zoom)); } catch {}
+    }, 300);
+    return () => clearTimeout(t);
+  }, [zoom]);
 
   useEffect(() => {
     const s = document.createElement("style");
@@ -1477,26 +1538,6 @@ export default function App() {
 
         <DetailBody />
       </div>
-
-      {/* Desktop-only vertical font-size rail. Pinned to the right edge of
-          the detail pane, vertically centered. Only renders when something
-          is selected, so the welcome screen stays uncluttered. */}
-      {!overlay && !isNarrow && selected && (
-        <div style={{
-          position: "fixed",
-          right: 24,
-          top: "50%",
-          transform: "translateY(-50%)",
-          zIndex: 5,
-        }}>
-          <FontSizeSlider
-            zoom={zoom}
-            setZoom={setZoom}
-            accent={detailAccent}
-            vertical
-          />
-        </div>
-      )}
     </div>
   );
 
