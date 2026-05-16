@@ -8,7 +8,7 @@ import TAXONOMY       from "./content/taxonomy.json";
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
 const STYLE = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Amiri:wght@400;700&family=Amiri+Quran&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Amiri:wght@400;700&family=Amiri+Quran&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap');
 
   /* ─── Quran scripts ────────────────────────────────────────────────────────
      Loaded directly from Quran Foundation's CDN — the same source Quran.com
@@ -95,9 +95,12 @@ const LENS_COLOR = {
 const SERIF  = "'Cormorant Garamond', Georgia, serif";
 const BODY   = "'Source Serif 4', Georgia, serif";
 
-// Urdu translations always render with Amiri — never Uthmani Hafs, which is
-// designed exclusively for Quranic Arabic and lacks Urdu-specific glyphs.
-const ARABIC_URDU = "'Amiri Quran', 'Amiri', 'Scheherazade New', serif";
+// Urdu translations render in true Nastaliq — the hanging-baseline cursive
+// script that Urdu is actually written in, not the Arabic Naskh forms that
+// look foreign to Urdu readers. Noto Nastaliq Urdu is Google's professionally
+// cut Nastaliq face; fallbacks are Naskh-based and will only show if the web
+// font fails to load.
+const ARABIC_URDU = "'Noto Nastaliq Urdu', 'Amiri', 'Scheherazade New', serif";
 
 // The Arabic font for dua text is driven by the user's script preference.
 // Falls back through the loaded Quran Foundation fonts to Amiri to the
@@ -635,9 +638,12 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
 
       {/* Translation — roman, near-white, regular weight. The translation is
           the meaning; it earns full readability. Italic stays reserved for
-          editorial tone (the use-context line, the tagline). */}
+          editorial tone (the use-context line, the tagline).
+          Urdu renders in Nastaliq, which needs a much taller line-height
+          for its sloping baseline and deep descenders to breathe. */}
       <div style={{
-        fontSize: isUr ? 18 : 17, color: C.text, lineHeight: 1.75,
+        fontSize: isUr ? 20 : 17, color: C.text,
+        lineHeight: isUr ? 2.6 : 1.75,
         marginBottom: 24, direction: isUr ? "rtl" : "ltr",
         fontFamily: isUr ? ARABIC_URDU : BODY,
         fontWeight: 400,
@@ -812,8 +818,9 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
 
       <div style={{
         fontFamily: isUr ? ARABIC_URDU : BODY,
-        fontSize: isUr ? 15 : 14,
-        color: C.textMuted, lineHeight: 1.7,
+        fontSize: isUr ? 17 : 14,
+        color: C.textMuted,
+        lineHeight: isUr ? 2.4 : 1.7,
         textAlign: "center",
         direction: isUr ? "rtl" : "ltr",
         maxWidth: 480, margin: "0 auto",
