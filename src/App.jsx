@@ -80,6 +80,90 @@ const STYLE = `
   .thinscroll::-webkit-scrollbar-thumb { background: rgba(184,193,236,0.22); border-radius: 3px; }
   .thinscroll::-webkit-scrollbar-track { background: transparent; }
 
+  /* ─── Font-size slider ───────────────────────────────────────────────
+     A native range input restyled to match the app. Used in two orientations:
+     vertical (desktop, pinned to the right of the detail pane) and horizontal
+     (mobile, inline below the script selector). The thumb's color is set by
+     the parent via --zk-accent so the slider themes with the dua/routine. */
+
+  .zk-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+  }
+  .zk-slider:focus { outline: none; }
+
+  /* Horizontal — used on mobile */
+  .zk-slider.h {
+    width: 100%;
+    height: 18px;
+  }
+  .zk-slider.h::-webkit-slider-runnable-track {
+    height: 2px;
+    background: rgba(184,193,236,0.18);
+    border-radius: 999px;
+  }
+  .zk-slider.h::-moz-range-track {
+    height: 2px;
+    background: rgba(184,193,236,0.18);
+    border-radius: 999px;
+  }
+
+  /* Vertical — used on desktop. Achieved by rotating the horizontal track,
+     which is more reliable across browsers than the orient="vertical" attr. */
+  .zk-slider.v {
+    width: 160px;
+    height: 18px;
+    transform: rotate(-90deg);
+    transform-origin: center;
+  }
+  .zk-slider.v::-webkit-slider-runnable-track {
+    height: 2px;
+    background: rgba(184,193,236,0.18);
+    border-radius: 999px;
+  }
+  .zk-slider.v::-moz-range-track {
+    height: 2px;
+    background: rgba(184,193,236,0.18);
+    border-radius: 999px;
+  }
+
+  /* Thumb — accent-colored disc with a subtle halo on hover/active */
+  .zk-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--zk-accent, #b8c1ec);
+    border: none;
+    margin-top: -6px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 12px var(--zk-accent-glow, transparent);
+    transition: box-shadow 0.18s ease, transform 0.18s ease;
+  }
+  .zk-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--zk-accent, #b8c1ec);
+    border: none;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 12px var(--zk-accent-glow, transparent);
+    transition: box-shadow 0.18s ease, transform 0.18s ease;
+  }
+  .zk-slider:hover::-webkit-slider-thumb,
+  .zk-slider:active::-webkit-slider-thumb {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 18px var(--zk-accent, #b8c1ec);
+  }
+  .zk-slider:hover::-moz-range-thumb,
+  .zk-slider:active::-moz-range-thumb {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 18px var(--zk-accent, #b8c1ec);
+  }
+
   * { box-sizing: border-box; }
 `;
 
@@ -527,10 +611,11 @@ function Sidebar({
   );
 }
 
-function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT, ttsOk, script, setScript }) {
+function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT, ttsOk, script, setScript, zoom, setZoom, isNarrow }) {
   const accent = duaColor(dua);
   const isUr = lang === "ur";
   const translation = translateOf(dua, lang);
+  const z = zoom / 100;
 
   return (
     <div className="detailIn" style={{ maxWidth: 620, margin: "0 auto" }}>
@@ -572,14 +657,14 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
           "--glow": rgba(accent, 0.45),
           "--glow-soft": rgba(accent, 0.22),
           fontFamily: arabicFont(script),
-          fontSize: `${2.2 * arabicScale(script)}rem`,
+          fontSize: `${2.2 * arabicScale(script) * z}rem`,
           lineHeight: script === "indopak" ? 2.7 : 2.45,
           color: C.text,
           fontFeatureSettings: "'liga' 1, 'calt' 1",
           textAlign: "center",
           direction: "rtl",
           padding: "20px 0 34px",
-          transition: "font-family 0.2s ease",
+          transition: "font-family 0.2s ease, font-size 0.18s ease",
         }}
       >
         {dua.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
@@ -607,6 +692,12 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         setScript={setScript}
         accent={accent}
       />
+
+      {/* Mobile-only: font-size slider directly below the script selector.
+          Desktop gets the vertical rail rendered by the parent detail pane. */}
+      {isNarrow && (
+        <FontSizeSlider zoom={zoom} setZoom={setZoom} accent={accent} />
+      )}
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
         <button
@@ -771,9 +862,96 @@ function ScriptSelector({ script, setScript, accent }) {
   );
 }
 
-function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, script }) {
+// Font-size slider. Range 75–175 (% of baseline Arabic size). Two layouts:
+//   • vertical (`vertical: true`)   — desktop rail, parent positions it
+//   • horizontal (default)          — mobile, inline below the script selector
+// The accent prop themes the thumb color and its glow.
+function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
+  const cssVars = {
+    "--zk-accent": accent,
+    "--zk-accent-glow": rgba(accent, 0.4),
+  };
+
+  if (vertical) {
+    // Vertical: a tight stack containing a label, the rotated track, and the
+    // current percentage. Total footprint is narrow so it docks cleanly.
+    return (
+      <div style={{
+        ...cssVars,
+        display: "flex", flexDirection: "column", alignItems: "center",
+        gap: 14, userSelect: "none",
+      }}>
+        <span style={{
+          fontFamily: BODY, fontSize: 9.5, color: C.textFaint,
+          letterSpacing: "0.18em", textTransform: "uppercase",
+          writingMode: "vertical-rl", transform: "rotate(180deg)",
+        }}>
+          Size
+        </span>
+        {/* The rotated track lives inside a fixed-height container so the
+            rotation doesn't break the parent flow. */}
+        <div style={{
+          height: 160, display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <input
+            type="range"
+            min={75} max={175} step={1}
+            value={zoom}
+            onChange={(e) => setZoom(parseInt(e.target.value, 10))}
+            className="zk-slider v"
+            aria-label="Arabic font size"
+          />
+        </div>
+        <span style={{
+          fontFamily: BODY, fontSize: 11, color: accent,
+          letterSpacing: "0.04em", fontVariantNumeric: "tabular-nums",
+          minWidth: 38, textAlign: "center",
+        }}>
+          {zoom}%
+        </span>
+      </div>
+    );
+  }
+
+  // Horizontal: inline row with a label on the left, slider in the middle,
+  // and the current percentage on the right.
+  return (
+    <div style={{
+      ...cssVars,
+      display: "flex", alignItems: "center", gap: 14,
+      marginBottom: 18, padding: "0 4px",
+    }}>
+      <span style={{
+        fontFamily: BODY, fontSize: 10, color: C.textFaint,
+        letterSpacing: "0.12em", textTransform: "uppercase",
+        flexShrink: 0,
+      }}>
+        Size
+      </span>
+      <input
+        type="range"
+        min={75} max={175} step={1}
+        value={zoom}
+        onChange={(e) => setZoom(parseInt(e.target.value, 10))}
+        className="zk-slider h"
+        style={{ flex: 1 }}
+        aria-label="Arabic font size"
+      />
+      <span style={{
+        fontFamily: BODY, fontSize: 11, color: accent,
+        letterSpacing: "0.04em", fontVariantNumeric: "tabular-nums",
+        flexShrink: 0, minWidth: 38, textAlign: "right",
+      }}>
+        {zoom}%
+      </span>
+    </div>
+  );
+}
+
+function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, script, zoom }) {
   const done = count >= target;
   const isUr = lang === "ur";
+  const z = zoom / 100;
   return (
     <div style={{
       background: C.surface,
@@ -837,12 +1015,12 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
         "--glow": rgba(accent, 0.45),
         "--glow-soft": rgba(accent, 0.22),
         fontFamily: arabicFont(script),
-        fontSize: `${1.6 * arabicScale(script)}rem`,
+        fontSize: `${1.6 * arabicScale(script) * z}rem`,
         lineHeight: script === "indopak" ? 2.4 : 2.2,
         direction: "rtl", textAlign: "center", color: C.text,
         marginBottom: showT ? 10 : 6,
         fontFeatureSettings: "'liga' 1, 'calt' 1",
-        transition: "font-family 0.2s ease",
+        transition: "font-family 0.2s ease, font-size 0.18s ease",
       }}>
         {step.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
           <span
@@ -887,10 +1065,11 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
   );
 }
 
-function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScript }) {
+function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScript, zoom, setZoom, isNarrow }) {
   const steps = routine.steps.map(resolveStep);
   const [counts, setCounts] = useState(steps.map(() => 0));
   const accent = routine.color;
+  const z = zoom / 100;
 
   const tap = (i) => {
     setCounts(prev => {
@@ -923,8 +1102,9 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
         </h2>
         <span style={{
           fontFamily: arabicFont(script),
-          fontSize: `${1.5 * arabicScale(script)}rem`,
+          fontSize: `${1.5 * arabicScale(script) * z}rem`,
           color: accent, marginLeft: "auto", lineHeight: 1,
+          transition: "font-size 0.18s ease",
         }}>
           {routine.arabic}
         </span>
@@ -958,6 +1138,11 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
       </div>
 
       <ScriptSelector script={script} setScript={setScript} accent={accent} />
+
+      {/* Mobile-only horizontal slider. Desktop gets the vertical rail. */}
+      {isNarrow && (
+        <FontSizeSlider zoom={zoom} setZoom={setZoom} accent={accent} />
+      )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
         <button
@@ -999,6 +1184,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
           count={counts[i]} target={s.count}
           onTap={() => tap(i)}
           accent={accent} lang={lang} showT={showT} script={script}
+          zoom={zoom}
         />
       ))}
 
@@ -1011,7 +1197,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
         }}>
           <div style={{
             fontFamily: arabicFont(script),
-            fontSize: `${1.5 * arabicScale(script)}rem`,
+            fontSize: `${1.5 * arabicScale(script) * z}rem`,
             color: accent, marginBottom: 6,
           }}>
             تَقَبَّلَ ٱللَّهُ
@@ -1138,6 +1324,22 @@ export default function App() {
     try { window.localStorage.setItem("zikir.script", s); } catch {}
   };
 
+  // Arabic-text zoom preference. 100 = baseline. Range clamped to 75–175 so
+  // it never goes absurd in either direction. Persisted like the script.
+  const [zoom, setZoomRaw] = useState(() => {
+    if (typeof window === "undefined") return 100;
+    try {
+      const n = parseInt(window.localStorage.getItem("zikir.zoom"), 10);
+      if (Number.isFinite(n) && n >= 75 && n <= 175) return n;
+    } catch {}
+    return 100;
+  });
+  const setZoom = (n) => {
+    const clamped = Math.min(175, Math.max(75, Math.round(n)));
+    setZoomRaw(clamped);
+    try { window.localStorage.setItem("zikir.zoom", String(clamped)); } catch {}
+  };
+
   useEffect(() => {
     const s = document.createElement("style");
     s.textContent = STYLE;
@@ -1201,6 +1403,8 @@ export default function App() {
           lang={lang} setLang={setLang}
           showT={showT} setShowT={setShowT}
           script={script} setScript={setScript}
+          zoom={zoom} setZoom={setZoom}
+          isNarrow={isNarrow}
         />
       );
     }
@@ -1211,6 +1415,8 @@ export default function App() {
         speaking={speaking} speak={speak} stop={stop}
         showT={showT} setShowT={setShowT} ttsOk={ttsOk}
         script={script} setScript={setScript}
+        zoom={zoom} setZoom={setZoom}
+        isNarrow={isNarrow}
       />
     );
   };
@@ -1271,6 +1477,26 @@ export default function App() {
 
         <DetailBody />
       </div>
+
+      {/* Desktop-only vertical font-size rail. Pinned to the right edge of
+          the detail pane, vertically centered. Only renders when something
+          is selected, so the welcome screen stays uncluttered. */}
+      {!overlay && !isNarrow && selected && (
+        <div style={{
+          position: "fixed",
+          right: 24,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 5,
+        }}>
+          <FontSizeSlider
+            zoom={zoom}
+            setZoom={setZoom}
+            accent={detailAccent}
+            vertical
+          />
+        </div>
+      )}
     </div>
   );
 
