@@ -287,6 +287,80 @@ const STYLE = `
     border-left: 1px solid var(--zk-accent, rgba(255,255,255,0.30));
   }
 
+  /* ─── Disclosure (collapsible section) ────────────────────────────────
+     A labeled bar that toggles a section underneath. Used for the
+     transliteration. The smooth height animation uses the CSS
+     grid-template-rows trick: 0fr → 1fr animates the row's "available
+     height" rather than its literal height, which works for any content
+     length without measuring. The child must have min-height: 0 and
+     overflow: hidden so the row clipping is honored. */
+
+  .zk-disclosure-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 4px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    color: rgba(255,254,254,0.65);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-align: left;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .zk-disclosure-header:hover {
+    color: #fffffe;
+    border-top-color: rgba(255,255,255,0.14);
+  }
+  .zk-disclosure-header.is-open {
+    color: rgba(255,254,254,0.8);
+  }
+  .zk-disclosure-header .zk-chev {
+    width: 12px;
+    height: 12px;
+    margin-left: auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .zk-disclosure-header.is-open .zk-chev {
+    transform: rotate(180deg);
+  }
+
+  .zk-disclosure-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .zk-disclosure-body.is-open {
+    grid-template-rows: 1fr;
+  }
+  .zk-disclosure-body > .zk-disclosure-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+  /* The actual visible content. Fades + slides slightly on expand so it
+     reveals like a page turning, not a hard pop. */
+  .zk-disclosure-content {
+    padding: 6px 4px 16px;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.28s ease 0.04s, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.04s;
+  }
+  .zk-disclosure-body.is-open .zk-disclosure-content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
   * { box-sizing: border-box; }
 `;
 
@@ -854,14 +928,6 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
           title={speaking ? "Stop" : "Play Arabic"}
         />
 
-        <GlassIconButton
-          onClick={() => setShowT(!showT)}
-          active={showT}
-          accent={accent}
-          icon={ICONS.text}
-          title={showT ? "Hide transliteration" : "Show transliteration"}
-        />
-
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
           <GlassSegmented
             value={script}
@@ -883,19 +949,22 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         </div>
       </div>
 
-      {/* Transliteration — roman (not italic), slightly muted color for
-          differentiation. Source Serif 4 holds up well at this size. */}
-      {showT && (
+      {/* Transliteration — collapsible. The Disclosure header acts as both
+          the label and the toggle, so the user can always see that this
+          content exists, even when collapsed. */}
+      <Disclosure
+        label="Transliteration"
+        open={showT}
+        onToggle={() => setShowT(!showT)}
+      >
         <div style={{
           fontSize: 15, color: C.textSub,
-          fontFamily: BODY, lineHeight: 1.75, marginBottom: 18,
-          padding: "14px 0",
-          borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}`,
+          fontFamily: BODY, lineHeight: 1.75,
           letterSpacing: "0.005em",
         }}>
           {dua.translit}
         </div>
-      )}
+      </Disclosure>
 
       {/* Translation — roman, near-white, regular weight. The translation is
           the meaning; it earns full readability. Italic stays reserved for
@@ -1010,16 +1079,42 @@ function GlassIconButton({ onClick, disabled, active, accent, icon, title, varia
 }
 
 // Icon path strings — kept here so the components stay clean.
+// Disclosure (collapsible section). Pure presentational — the parent owns
+// the open state. The expand/collapse is CSS-driven (grid-rows 0fr → 1fr)
+// for smooth animation without measuring content height.
+function Disclosure({ label, open, onToggle, children }) {
+  return (
+    <div style={{ marginBottom: 6 }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`zk-disclosure-header ${open ? "is-open" : ""}`}
+        aria-expanded={open}
+      >
+        {label}
+        <svg className="zk-chev" viewBox="0 0 16 16" aria-hidden="true">
+          <path d={ICONS.chevron} />
+        </svg>
+      </button>
+      <div className={`zk-disclosure-body ${open ? "is-open" : ""}`}>
+        <div className="zk-disclosure-inner">
+          <div className="zk-disclosure-content">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const ICONS = {
   // Equilateral triangle pointing right, optically centered (left edge at x=5
   // so the visual weight sits where the eye expects "play" to be).
   play: "M5 3.5 L12 8 L5 12.5 Z",
   // Two vertical bars — pause/stop.
   stop: "M4.5 3.5 H7 V12.5 H4.5 Z M9 3.5 H11.5 V12.5 H9 Z",
-  // Stylized "Aa" stroke for "show/hide transliteration": a sparkline-y
-  // glyph that reads as 'text mode' without being an actual letter (which
-  // would compete with the dua's own text). Two short underlining strokes.
-  text: "M3 6 H13 M3 9.5 H10 M3 13 H8",
+  // Down-pointing chevron. Rotated via CSS transform when expanded.
+  chevron: "M3.5 6 L8 10.5 L12.5 6",
 };
 
 // Font-size slider. Range 75–175 (% of baseline Arabic size). Two layouts:
@@ -1359,13 +1454,17 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
         flexWrap: "wrap",
         rowGap: 10,
       }}>
-        <GlassIconButton
+        <button
+          type="button"
           onClick={() => setShowT(!showT)}
-          active={showT}
-          accent={accent}
-          icon={ICONS.text}
-          title={showT ? "Hide transliteration" : "Show transliteration"}
-        />
+          className={`zk-glass ${showT ? "is-active" : ""}`}
+          style={{
+            "--zk-accent": accent,
+            "--zk-glass-tint": rgba(accent, 0.10),
+          }}
+        >
+          {showT ? "Hide" : "Show"} transliteration
+        </button>
 
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
           <GlassSegmented
