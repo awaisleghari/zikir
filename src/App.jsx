@@ -837,7 +837,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
   const translation = translateOf(dua, lang);
 
   return (
-    <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto" }}>
+    <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto", overflow: "visible" }}>
       <div style={{
         fontFamily: BODY, fontSize: 12.5, color: accent,
         letterSpacing: "0.02em", marginBottom: 6,
@@ -866,17 +866,22 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         letterSpacing: "0.55em", marginBottom: 16, opacity: 0.55,
       }}>✦ ✦ ✦</div>
 
-      {/* Arabic block + co-located desktop slider. The grid puts the slider
-          beside the Arabic and centers them against each other, so the rail
-          is anchored to the text it controls (not floating against the page
-          at large). On mobile the grid collapses to a single column and the
-          horizontal slider appears further down, below the script selector. */}
+      {/* Arabic block + co-located desktop slider. On desktop, this grid is
+          widened beyond the 620px content column via negative margins so
+          the slider sits in its own right-side lane, clearly outside the
+          column where the controls row below lives. On mobile (isNarrow),
+          all desktop-only layout collapses; the wrapper resolves to a
+          single full-width column with the Arabic text alone, and the
+          horizontal slider appears further down beneath the controls. */}
       <div style={{
         display: "grid",
         gridTemplateColumns: isNarrow ? "1fr" : "minmax(0, 1fr) 96px",
         alignItems: "center",
-        columnGap: isNarrow ? 0 : 56,
-        margin: "0 auto",
+        columnGap: isNarrow ? 0 : 96,
+        width: isNarrow ? "100%" : "calc(100% + 220px)",
+        marginLeft: isNarrow ? 0 : "-70px",
+        marginRight: isNarrow ? 0 : "-150px",
+        overflow: "visible",
       }}>
         <div
           className={speaking ? "speaking-glow" : ""}
@@ -909,7 +914,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
             display: "flex",
             justifyContent: "center",
             alignSelf: "center",
-            transform: "translateX(44px)",
+            transform: "none",
           }}>
             <FontSizeSlider
               zoom={zoom}
@@ -1413,7 +1418,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
   const allDone = completed === steps.length;
 
   return (
-    <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto" }}>
+    <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto", overflow: "visible" }}>
       <div style={{
         fontFamily: BODY, fontSize: 12.5, color: accent,
         letterSpacing: "0.02em", marginBottom: 6,
@@ -1511,15 +1516,19 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
         </div>
       </div>
 
-      {/* Steps + co-located desktop slider. Same grid pattern as DuaDetail,
-          but the slider sits sticky at the top of the steps column rather
-          than centered — routines can be tall, and a center alignment would
-          push the slider far below the fold. */}
+      {/* Steps + co-located desktop slider. Same wider-plane pattern as
+          DuaDetail but with slightly more conservative expansion since
+          routines can be very tall and the slider is sticky. On mobile
+          (isNarrow), everything collapses to a single full-width column. */}
       <div style={{
         display: "grid",
         gridTemplateColumns: isNarrow ? "1fr" : "minmax(0, 1fr) 96px",
         alignItems: "start",
-        columnGap: isNarrow ? 0 : 56,
+        columnGap: isNarrow ? 0 : 88,
+        width: isNarrow ? "100%" : "calc(100% + 180px)",
+        marginLeft: isNarrow ? 0 : "-40px",
+        marginRight: isNarrow ? 0 : "-140px",
+        overflow: "visible",
       }}>
         <div>
           {steps.map((s, i) => (
@@ -1540,7 +1549,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
             justifyContent: "center",
             position: "sticky",
             top: 80,
-            transform: "translateX(44px)",
+            transform: "none",
           }}>
             <FontSizeSlider
               zoom={zoom}
