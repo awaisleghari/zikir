@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 import DUAS_RAW       from "./content/duas.json";
 import ADHKAR_RAW     from "./content/adhkar.json";
@@ -211,6 +211,17 @@ const STYLE = `
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.25s ease, transform 0.2s ease;
     white-space: nowrap;
+    /* Performance: promote to its own compositor layer so the expensive
+       backdrop-filter blur is rasterized once and cached, instead of being
+       re-computed every time a parent re-renders. Without this, clicking
+       any nearby control causes every glass button on screen to flicker
+       while the browser re-blurs each backdrop. */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: backdrop-filter;
+    /* Isolate this element's layout from the surrounding tree so that
+       changes inside it (or inside siblings) don't force a re-layout. */
+    contain: layout style;
   }
   .zk-glass:hover {
     background:
@@ -220,7 +231,7 @@ const STYLE = `
     color: #fffffe;
   }
   .zk-glass:active {
-    transform: scale(0.97);
+    transform: translateZ(0) scale(0.97);
   }
   .zk-glass:disabled {
     opacity: 0.4;
@@ -704,7 +715,7 @@ function RoutineListItem({ routine, selected, onClick, script }) {
   );
 }
 
-function Sidebar({
+const Sidebar = React.memo(function Sidebar({
   lens, setLens, groups, openGroup, setOpenGroup,
   selected, onSelectDua, onSelectRoutine, isNarrow, script,
 }) {
@@ -806,7 +817,7 @@ function Sidebar({
       </div>
     </div>
   );
-}
+});
 
 function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT, ttsOk, script, setScript, zoom, setZoom, isNarrow }) {
   const accent = duaColor(dua);
@@ -868,7 +879,6 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
             textAlign: "center",
             direction: "rtl",
             padding: "20px 0 34px",
-            transition: "font-family 0.2s ease",
           }}
         >
           {dua.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
@@ -933,18 +943,13 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
             value={script}
             onChange={setScript}
             accent={accent}
-            options={Object.values(SCRIPTS).map(s => ({
-              id: s.id, label: s.label, title: s.sublabel,
-            }))}
+            options={SCRIPT_OPTIONS}
           />
           <GlassSegmented
             value={lang}
             onChange={setLang}
             accent={accent}
-            options={[
-              { id: "en", label: "EN" },
-              { id: "ur", label: "اردو", font: ARABIC_URDU },
-            ]}
+            options={LANG_OPTIONS}
           />
         </div>
       </div>
@@ -1025,7 +1030,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
 
 // A 2-way segmented pill. Used for script (Uthmani / IndoPak) and language
 // (EN / اردو). Pass `options` as [{ id, label, font? }, ...].
-function GlassSegmented({ value, onChange, options, accent }) {
+const GlassSegmented = React.memo(function GlassSegmented({ value, onChange, options, accent }) {
   return (
     <div
       className="zk-seg"
@@ -1051,11 +1056,11 @@ function GlassSegmented({ value, onChange, options, accent }) {
       })}
     </div>
   );
-}
+});
 
 // Circular 36×36 icon button. Pass `icon` as an SVG path (the d= string of a
 // single <path>) — kept tiny and inline so we don't need an icon library.
-function GlassIconButton({ onClick, disabled, active, accent, icon, title, variant }) {
+const GlassIconButton = React.memo(function GlassIconButton({ onClick, disabled, active, accent, icon, title, variant }) {
   return (
     <button
       type="button"
@@ -1076,13 +1081,13 @@ function GlassIconButton({ onClick, disabled, active, accent, icon, title, varia
       </svg>
     </button>
   );
-}
+});
 
 // Icon path strings — kept here so the components stay clean.
 // Disclosure (collapsible section). Pure presentational — the parent owns
 // the open state. The expand/collapse is CSS-driven (grid-rows 0fr → 1fr)
 // for smooth animation without measuring content height.
-function Disclosure({ label, open, onToggle, children }) {
+const Disclosure = React.memo(function Disclosure({ label, open, onToggle, children }) {
   return (
     <div style={{ marginBottom: 6 }}>
       <button
@@ -1105,7 +1110,7 @@ function Disclosure({ label, open, onToggle, children }) {
       </div>
     </div>
   );
-}
+});
 
 const ICONS = {
   // Equilateral triangle pointing right, optically centered (left edge at x=5
@@ -1116,6 +1121,17 @@ const ICONS = {
   // Down-pointing chevron. Rotated via CSS transform when expanded.
   chevron: "M3.5 6 L8 10.5 L12.5 6",
 };
+
+// Stable option arrays for the script and language segmented pills. Defined
+// at module level so their identity is the same across all renders — which
+// is what makes React.memo on GlassSegmented actually skip re-render work.
+const SCRIPT_OPTIONS = Object.values(SCRIPTS).map(s => ({
+  id: s.id, label: s.label, title: s.sublabel,
+}));
+const LANG_OPTIONS = [
+  { id: "en", label: "EN" },
+  { id: "ur", label: "اردو", font: ARABIC_URDU },
+];
 
 // Font-size slider. Range 75–175 (% of baseline Arabic size). Two layouts:
 //   • vertical (`vertical: true`)   — desktop rail, parent positions it
@@ -1322,7 +1338,6 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
         direction: "rtl", textAlign: "center", color: C.text,
         marginBottom: showT ? 10 : 6,
         fontFeatureSettings: "'liga' 1, 'calt' 1",
-        transition: "font-family 0.2s ease",
       }}>
         {step.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
           <span
@@ -1471,18 +1486,13 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
             value={script}
             onChange={setScript}
             accent={accent}
-            options={Object.values(SCRIPTS).map(s => ({
-              id: s.id, label: s.label, title: s.sublabel,
-            }))}
+            options={SCRIPT_OPTIONS}
           />
           <GlassSegmented
             value={lang}
             onChange={setLang}
             accent={accent}
-            options={[
-              { id: "en", label: "EN" },
-              { id: "ur", label: "اردو", font: ARABIC_URDU },
-            ]}
+            options={LANG_OPTIONS}
           />
         </div>
       </div>
@@ -1717,14 +1727,17 @@ export default function App() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const groups = lens === "routines" ? [] : groupsForLens(lens);
+  const groups = useMemo(
+    () => lens === "routines" ? [] : groupsForLens(lens),
+    [lens]
+  );
   useEffect(() => {
     if (lens !== "routines" && groups.length) setOpenGroup(groups[0].id);
     else setOpenGroup(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lens]);
 
-  const speak = (text) => {
+  const speak = useCallback((text) => {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -1735,19 +1748,38 @@ export default function App() {
     u.onend = () => setSpeaking(false);
     u.onerror = () => setSpeaking(false);
     window.speechSynthesis.speak(u);
-  };
-  const stop = () => { window.speechSynthesis?.cancel(); setSpeaking(false); };
+  }, []);
 
-  const selectDua = (d) => { stop(); setSelected({ type: "dua", id: d.id, dua: d }); };
-  const selectRoutine = (r) => { stop(); setSelected({ type: "routine", id: r.id, routine: r }); };
-  const clearSelection = () => { stop(); setSelected(null); };
+  const stop = useCallback(() => {
+    window.speechSynthesis?.cancel();
+    setSpeaking(false);
+  }, []);
+
+  const selectDua = useCallback((d) => {
+    stop();
+    setSelected({ type: "dua", id: d.id, dua: d });
+  }, [stop]);
+  const selectRoutine = useCallback((r) => {
+    stop();
+    setSelected({ type: "routine", id: r.id, routine: r });
+  }, [stop]);
+  const clearSelection = useCallback(() => {
+    stop();
+    setSelected(null);
+  }, [stop]);
+
+  // The escape-to-close handler reads the latest `selected` via a ref so the
+  // effect doesn't re-mount on every state change.
+  const selectedRef = useRef(selected);
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape" && selected) clearSelection(); };
+    const onKey = (e) => {
+      if (e.key === "Escape" && selectedRef.current) clearSelection();
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected]);
+  }, [clearSelection]);
 
   const detailAccent = !selected
     ? "#7f5af0"
