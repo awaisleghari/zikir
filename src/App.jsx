@@ -213,15 +213,10 @@ const STYLE = `
     white-space: nowrap;
     /* Performance: promote to its own compositor layer so the expensive
        backdrop-filter blur is rasterized once and cached, instead of being
-       re-computed every time a parent re-renders. Without this, clicking
-       any nearby control causes every glass button on screen to flicker
-       while the browser re-blurs each backdrop. */
+       re-computed every time a parent re-renders. */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     will-change: backdrop-filter;
-    /* Isolate this element's layout from the surrounding tree so that
-       changes inside it (or inside siblings) don't force a re-layout. */
-    contain: layout style;
   }
   .zk-glass:hover {
     background:
@@ -1787,29 +1782,48 @@ export default function App() {
       ? selected.routine.color
       : duaColor(selected.dua);
 
-  const DetailBody = () => {
+  // Render the selected dua, routine, or welcome screen. This is intentionally
+  // a plain function (not a nested React component) — defining it as
+  // `const DetailBody = () => {...}` inside App was creating a new component
+  // type on every render, which forced React to unmount and remount the entire
+  // detail subtree on every state change, replaying the entrance animation
+  // each time. Using a function call inline keeps the existing DuaDetail /
+  // RoutineDetail instances mounted across normal state updates.
+  const renderDetailBody = () => {
     if (!selected) return <Welcome setLens={setLens} script={script} />;
     if (selected.type === "routine") {
       return (
         <RoutineDetail
-          key={selected.id}
+          key={`routine-${selected.id}`}
           routine={selected.routine}
-          lang={lang} setLang={setLang}
-          showT={showT} setShowT={setShowT}
-          script={script} setScript={setScript}
-          zoom={zoom} setZoom={setZoom}
+          lang={lang}
+          setLang={setLang}
+          showT={showT}
+          setShowT={setShowT}
+          script={script}
+          setScript={setScript}
+          zoom={zoom}
+          setZoom={setZoom}
           isNarrow={isNarrow}
         />
       );
     }
     return (
       <DuaDetail
+        key={`dua-${selected.id}`}
         dua={selected.dua}
-        lang={lang} setLang={setLang}
-        speaking={speaking} speak={speak} stop={stop}
-        showT={showT} setShowT={setShowT} ttsOk={ttsOk}
-        script={script} setScript={setScript}
-        zoom={zoom} setZoom={setZoom}
+        lang={lang}
+        setLang={setLang}
+        speaking={speaking}
+        speak={speak}
+        stop={stop}
+        showT={showT}
+        setShowT={setShowT}
+        ttsOk={ttsOk}
+        script={script}
+        setScript={setScript}
+        zoom={zoom}
+        setZoom={setZoom}
         isNarrow={isNarrow}
       />
     );
@@ -1869,7 +1883,7 @@ export default function App() {
           </div>
         ) : null}
 
-        <DetailBody />
+        {renderDetailBody()}
       </div>
     </div>
   );
