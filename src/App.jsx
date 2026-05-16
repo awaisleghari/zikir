@@ -12,17 +12,11 @@ const STYLE = `
 
   /* ─── Quran scripts ────────────────────────────────────────────────────────
      Loaded directly from Quran Foundation's CDN — the same source Quran.com
-     uses for its rendering. Three scripts are wired up:
+     uses for its rendering. Two scripts are wired up:
 
        • Uthmani  — KFGQPC Uthmanic Hafs (the official Madani script)
        • IndoPak  — Indopak Nastaleeq (the South Asian standard, Nastaleeq cut)
-       • Tajweed  — currently aliases to Uthmani Hafs. True Tajweed rendering
-                    requires letter-level color-coded markup of the source
-                    text, which Quran.com receives from its API. Our duas are
-                    plain Unicode Arabic, so colored Tajweed isn't achievable
-                    on this data without manual encoding by a qari/expert.
-                    Selecting Tajweed therefore shows the Uthmani font with
-                    a discreet note in the UI explaining the limitation.
+
      Each font is loaded with font-display: swap so the page never blocks
      waiting for them. */
 
@@ -120,13 +114,6 @@ const SCRIPTS = {
     label: "IndoPak",
     sublabel: "Nastaleeq",
     font: "'IndopakNastaleeq', 'Amiri', 'Scheherazade New', serif",
-  },
-  tajweed: {
-    id: "tajweed",
-    label: "Tajweed",
-    sublabel: "Uthmani base",
-    font: "'UthmanicHafs', 'Amiri Quran', 'Amiri', serif",
-    note: "True color-coded Tajweed needs letter-level rule encoding of each dua — work that requires a qari's review. Until then, Tajweed mode renders in the Uthmani script.",
   },
 };
 
@@ -516,7 +503,6 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
   const accent = duaColor(dua);
   const isUr = lang === "ur";
   const translation = translateOf(dua, lang);
-  const scriptInfo = SCRIPTS[script] || SCRIPTS.uthmani;
 
   return (
     <div className="detailIn" style={{ maxWidth: 620, margin: "0 auto" }}>
@@ -579,19 +565,6 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         setScript={setScript}
         accent={accent}
       />
-
-      {scriptInfo.note && (
-        <div style={{
-          fontFamily: BODY, fontSize: 11.5, color: C.textFaint,
-          lineHeight: 1.55, marginBottom: 16,
-          padding: "8px 14px",
-          background: rgba(accent, 0.05),
-          border: `1px solid ${rgba(accent, 0.18)}`,
-          borderRadius: 10,
-        }}>
-          {scriptInfo.note}
-        </div>
-      )}
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
         <button
