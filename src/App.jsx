@@ -112,55 +112,63 @@ const STYLE = `
     border-radius: 999px;
   }
 
-  /* Vertical — used on desktop. Achieved by rotating the horizontal track,
-     which is more reliable across browsers than the orient="vertical" attr. */
+  /* Vertical — used on desktop. Uses the CSS standard writing-mode property
+     for a true vertical slider with proper drag tracking. (The older
+     approach of CSS-rotating a horizontal slider breaks drag because the
+     browser tracks mouse-Y against the un-rotated horizontal axis.) */
   .zk-slider.v {
-    width: 160px;
-    height: 18px;
-    transform: rotate(-90deg);
-    transform-origin: center;
+    writing-mode: vertical-lr;
+    direction: rtl;            /* so larger values are at the top */
+    width: 18px;
+    height: 160px;
   }
   .zk-slider.v::-webkit-slider-runnable-track {
-    height: 2px;
+    width: 2px;
     background: rgba(184,193,236,0.18);
     border-radius: 999px;
   }
   .zk-slider.v::-moz-range-track {
-    height: 2px;
+    width: 2px;
     background: rgba(184,193,236,0.18);
     border-radius: 999px;
   }
 
-  /* Thumb — accent-colored disc with a subtle halo on hover/active */
+  /* Thumb — accent-colored disc. Glow intensifies on hover/active, but
+     critically the thumb itself does NOT scale: scaling the thumb pseudo
+     element during drag re-defines its hit-test region mid-gesture, which
+     causes Chromium to treat the cursor as off-thumb and abort the drag.
+     Glow-only hover preserves the slide gesture. */
   .zk-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 999px;
     background: var(--zk-accent, #b8c1ec);
     border: none;
-    margin-top: -6px;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 12px var(--zk-accent-glow, transparent);
-    transition: box-shadow 0.18s ease, transform 0.18s ease;
+    margin-top: -7px;          /* horizontal: pull up onto the 2px track */
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 10px var(--zk-accent-glow, transparent);
+    transition: box-shadow 0.2s ease;
+  }
+  .zk-slider.v::-webkit-slider-thumb {
+    margin-top: 0;
+    margin-left: -7px;         /* vertical: pull left onto the 2px track */
   }
   .zk-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 999px;
     background: var(--zk-accent, #b8c1ec);
     border: none;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 12px var(--zk-accent-glow, transparent);
-    transition: box-shadow 0.18s ease, transform 0.18s ease;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 10px var(--zk-accent-glow, transparent);
+    transition: box-shadow 0.2s ease;
   }
   .zk-slider:hover::-webkit-slider-thumb,
   .zk-slider:active::-webkit-slider-thumb {
-    transform: scale(1.15);
     box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 18px var(--zk-accent, #b8c1ec);
   }
   .zk-slider:hover::-moz-range-thumb,
   .zk-slider:active::-moz-range-thumb {
-    transform: scale(1.15);
     box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 18px var(--zk-accent, #b8c1ec);
   }
 
