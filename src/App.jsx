@@ -873,7 +873,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
           horizontal slider appears further down, below the script selector. */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: isNarrow ? "1fr" : "minmax(0, 1fr) 72px",
+        gridTemplateColumns: isNarrow ? "1fr" : "minmax(0, 1fr) 96px",
         alignItems: "center",
         columnGap: isNarrow ? 0 : 56,
         margin: "0 auto",
@@ -909,7 +909,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
             display: "flex",
             justifyContent: "center",
             alignSelf: "center",
-            transform: "translateX(28px)",
+            transform: "translateX(44px)",
           }}>
             <FontSizeSlider
               zoom={zoom}
@@ -1206,10 +1206,8 @@ function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
           color: C.textFaint,
           letterSpacing: "0.18em",
           textTransform: "uppercase",
-          writingMode: "vertical-rl",
-          transform: "rotate(180deg)",
         }}>
-          Size
+          Zoom
         </span>
 
         <div style={{
@@ -1259,7 +1257,7 @@ function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
         textTransform: "uppercase",
         flexShrink: 0,
       }}>
-        Size
+        Zoom
       </span>
 
       {input}
@@ -1519,7 +1517,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
           push the slider far below the fold. */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: isNarrow ? "1fr" : "minmax(0, 1fr) 72px",
+        gridTemplateColumns: isNarrow ? "1fr" : "minmax(0, 1fr) 96px",
         alignItems: "start",
         columnGap: isNarrow ? 0 : 56,
       }}>
@@ -1542,7 +1540,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
             justifyContent: "center",
             position: "sticky",
             top: 80,
-            transform: "translateX(28px)",
+            transform: "translateX(44px)",
           }}>
             <FontSizeSlider
               zoom={zoom}
