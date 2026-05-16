@@ -173,6 +173,120 @@ const STYLE = `
     box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 0 18px var(--zk-accent, #b8c1ec);
   }
 
+  /* ─── Glass controls ─────────────────────────────────────────────────
+     A single button language used across the detail controls row.
+     Variants:
+       .zk-glass            — base. Frosted surface, hairline border,
+                              soft inner highlight, very low-opacity tint.
+       .zk-glass.is-active  — picked / on. Adds an accent-tinted wash and
+                              a hairline accent border.
+       .zk-glass.zk-icon    — circular 36×36 icon button (play, toggle).
+       .zk-seg              — wrapper that joins two .zk-glass buttons into
+                              a 2-way segmented pill (script, language).
+
+     All buttons resolve to height: 36px so a controls row stays on one
+     baseline regardless of which buttons are inside. The accent color is
+     consumed from --zk-accent set on a parent. */
+
+  .zk-glass {
+    position: relative;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 60%, rgba(255,255,255,0.00) 100%),
+      rgba(255,255,255,0.025);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+    color: rgba(255,254,254,0.78);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.25s ease, transform 0.2s ease;
+    white-space: nowrap;
+  }
+  .zk-glass:hover {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 60%, rgba(255,255,255,0.00) 100%),
+      rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.18);
+    color: #fffffe;
+  }
+  .zk-glass:active {
+    transform: scale(0.97);
+  }
+  .zk-glass:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .zk-glass.is-active {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 60%, rgba(255,255,255,0.00) 100%),
+      var(--zk-glass-tint, rgba(255,255,255,0.05));
+    border-color: var(--zk-accent, rgba(255,255,255,0.30));
+    color: #fffffe;
+  }
+
+  /* Circular 36×36 icon button */
+  .zk-glass.zk-icon {
+    width: 36px;
+    padding: 0;
+  }
+  .zk-glass.zk-icon svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+    fill: currentColor;
+  }
+  /* Play button — accent glow when idle, brighter when playing */
+  .zk-glass.zk-play {
+    color: var(--zk-accent, rgba(255,254,254,0.78));
+    box-shadow: 0 0 0 0 transparent, inset 0 0 10px rgba(255,255,255,0.04);
+  }
+  .zk-glass.zk-play:hover {
+    color: var(--zk-accent-bright, #fffffe);
+    box-shadow: 0 0 18px var(--zk-accent-glow, transparent), inset 0 0 12px rgba(255,255,255,0.06);
+  }
+  .zk-glass.zk-play.is-playing {
+    color: #fffffe;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 60%, rgba(255,255,255,0.00) 100%),
+      var(--zk-glass-tint, rgba(255,255,255,0.06));
+    border-color: var(--zk-accent, rgba(255,255,255,0.40));
+    box-shadow: 0 0 22px var(--zk-accent-glow, transparent), inset 0 0 12px rgba(255,255,255,0.08);
+  }
+
+  /* Segmented 2-way pill: a flex row of two .zk-glass children with the
+     inner edge collapsed so they read as one element split in two. */
+  .zk-seg {
+    display: inline-flex;
+    border-radius: 999px;
+    isolation: isolate;
+  }
+  .zk-seg .zk-glass {
+    border-radius: 0;
+  }
+  .zk-seg .zk-glass:first-child {
+    border-top-left-radius: 999px;
+    border-bottom-left-radius: 999px;
+  }
+  .zk-seg .zk-glass:last-child {
+    border-top-right-radius: 999px;
+    border-bottom-right-radius: 999px;
+    border-left: none;          /* collapse inner edge */
+  }
+  /* When the right segment is active, its left edge should still read */
+  .zk-seg .zk-glass:last-child.is-active {
+    border-left: 1px solid var(--zk-accent, rgba(255,255,255,0.30));
+  }
+
   * { box-sizing: border-box; }
 `;
 
@@ -711,69 +825,61 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         )}
       </div>
 
-      {/* Script selector — small, discreet, sits right under the Arabic block */}
-      <ScriptSelector
-        script={script}
-        setScript={setScript}
-        accent={accent}
-      />
-
-      {/* Mobile-only: font-size slider directly below the script selector.
-          Desktop gets the vertical rail rendered by the parent detail pane. */}
+      {/* Mobile-only font-size slider. Sits on its own row between the
+          Arabic and the controls so the controls row can stay clean. */}
       {isNarrow && (
         <FontSizeSlider zoom={zoom} setZoom={setZoom} accent={accent} />
       )}
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
-        <button
+      {/* Unified controls row. Two clusters — actions on the left, choices
+          on the right — separated by margin-left:auto on the right cluster.
+          Every control is a .zk-glass, every control is 36px tall, so the
+          row reads as one balanced strip. */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 4,
+        marginBottom: 22,
+        flexWrap: "wrap",
+        rowGap: 10,
+      }}>
+        <GlassIconButton
+          variant="play"
           onClick={() => (speaking ? stop() : speak(dua.arabic))}
           disabled={!ttsOk}
-          style={{
-            background: speaking ? accent : rgba(accent, 0.14),
-            border: `1px solid ${accent}`,
-            borderRadius: 999, padding: "9px 18px",
-            cursor: ttsOk ? "pointer" : "not-allowed",
-            color: speaking ? C.void : accent,
-            fontSize: 13, fontWeight: 600, fontFamily: BODY,
-            display: "inline-flex", alignItems: "center", gap: 8,
-            opacity: ttsOk ? 1 : 0.5, transition: "all 0.15s",
-          }}
-        >
-          <span style={{ fontSize: 11 }}>{speaking ? "■" : "▶"}</span>
-          {speaking ? "Stop" : "Listen in Arabic"}
-        </button>
+          active={speaking}
+          accent={accent}
+          icon={speaking ? ICONS.stop : ICONS.play}
+          title={speaking ? "Stop" : "Play Arabic"}
+        />
 
-        <button
+        <GlassIconButton
           onClick={() => setShowT(!showT)}
-          style={{
-            background: "transparent", border: `1px solid ${C.line}`,
-            borderRadius: 999, padding: "9px 14px", cursor: "pointer",
-            color: showT ? C.textSub : C.textFaint,
-            fontSize: 12, fontFamily: BODY,
-          }}
-        >
-          {showT ? "— Hide" : "+ Show"} transliteration
-        </button>
+          active={showT}
+          accent={accent}
+          icon={ICONS.text}
+          title={showT ? "Hide transliteration" : "Show transliteration"}
+        />
 
-        <div style={{ display: "flex", marginLeft: "auto" }}>
-          {[{ id: "en", label: "EN" }, { id: "ur", label: "اردو" }].map((l, i) => (
-            <button
-              key={l.id}
-              onClick={() => setLang(l.id)}
-              style={{
-                background: lang === l.id ? rgba(accent, 0.14) : "transparent",
-                border: `1px solid ${lang === l.id ? rgba(accent, 0.5) : C.line}`,
-                borderLeft: i > 0 ? "none" : undefined,
-                borderRadius: i === 0 ? "999px 0 0 999px" : "0 999px 999px 0",
-                padding: "8px 14px", cursor: "pointer",
-                color: lang === l.id ? C.text : C.textFaint,
-                fontSize: 12, fontWeight: lang === l.id ? 600 : 400,
-                fontFamily: l.id === "ur" ? ARABIC_URDU : BODY,
-              }}
-            >
-              {l.label}
-            </button>
-          ))}
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <GlassSegmented
+            value={script}
+            onChange={setScript}
+            accent={accent}
+            options={Object.values(SCRIPTS).map(s => ({
+              id: s.id, label: s.label, title: s.sublabel,
+            }))}
+          />
+          <GlassSegmented
+            value={lang}
+            onChange={setLang}
+            accent={accent}
+            options={[
+              { id: "en", label: "EN" },
+              { id: "ur", label: "اردو", font: ARABIC_URDU },
+            ]}
+          />
         </div>
       </div>
 
@@ -844,48 +950,77 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
 // Small horizontal selector for Quran script. Used inside DuaDetail and
 // RoutineDetail. Visually quiet — three labels in a pill row, themed to the
 // current accent.
-function ScriptSelector({ script, setScript, accent }) {
+// ─── Glass UI primitives ────────────────────────────────────────────────────
+// One button language used across the controls row. Build other controls on
+// top of these two — never reach for ad-hoc inline-styled buttons.
+
+// A 2-way segmented pill. Used for script (Uthmani / IndoPak) and language
+// (EN / اردو). Pass `options` as [{ id, label, font? }, ...].
+function GlassSegmented({ value, onChange, options, accent }) {
   return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "center",
-      gap: 6, marginBottom: 18,
-    }}>
-      <span style={{
-        fontFamily: BODY, fontSize: 10, color: C.textFaint,
-        letterSpacing: "0.12em", textTransform: "uppercase",
-        marginRight: 4,
-      }}>
-        Script
-      </span>
-      {Object.values(SCRIPTS).map((s, i, all) => {
-        const active = s.id === script;
+    <div
+      className="zk-seg"
+      style={{
+        "--zk-accent": accent,
+        "--zk-glass-tint": rgba(accent, 0.10),
+      }}
+    >
+      {options.map((opt) => {
+        const active = opt.id === value;
         return (
           <button
-            key={s.id}
-            onClick={() => setScript(s.id)}
-            title={s.sublabel}
-            style={{
-              background: active ? rgba(accent, 0.14) : "transparent",
-              border: `1px solid ${active ? rgba(accent, 0.5) : C.line}`,
-              borderLeft: i > 0 ? "none" : `1px solid ${active ? rgba(accent, 0.5) : C.line}`,
-              borderRadius:
-                i === 0 ? "999px 0 0 999px" :
-                i === all.length - 1 ? "0 999px 999px 0" : 0,
-              padding: "6px 12px",
-              cursor: "pointer",
-              color: active ? C.text : C.textFaint,
-              fontSize: 11.5, fontWeight: active ? 600 : 400,
-              fontFamily: BODY, letterSpacing: "0.02em",
-              transition: "all 0.15s",
-            }}
+            key={opt.id}
+            type="button"
+            onClick={() => onChange(opt.id)}
+            className={`zk-glass ${active ? "is-active" : ""}`}
+            title={opt.title}
+            style={opt.font ? { fontFamily: opt.font } : undefined}
           >
-            {s.label}
+            {opt.label}
           </button>
         );
       })}
     </div>
   );
 }
+
+// Circular 36×36 icon button. Pass `icon` as an SVG path (the d= string of a
+// single <path>) — kept tiny and inline so we don't need an icon library.
+function GlassIconButton({ onClick, disabled, active, accent, icon, title, variant }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      className={`zk-glass zk-icon ${variant === "play" ? "zk-play" : ""} ${active ? (variant === "play" ? "is-playing" : "is-active") : ""}`}
+      style={{
+        "--zk-accent": accent,
+        "--zk-accent-bright": accent,
+        "--zk-accent-glow": rgba(accent, 0.45),
+        "--zk-glass-tint": rgba(accent, 0.12),
+      }}
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d={icon} />
+      </svg>
+    </button>
+  );
+}
+
+// Icon path strings — kept here so the components stay clean.
+const ICONS = {
+  // Equilateral triangle pointing right, optically centered (left edge at x=5
+  // so the visual weight sits where the eye expects "play" to be).
+  play: "M5 3.5 L12 8 L5 12.5 Z",
+  // Two vertical bars — pause/stop.
+  stop: "M4.5 3.5 H7 V12.5 H4.5 Z M9 3.5 H11.5 V12.5 H9 Z",
+  // Stylized "Aa" stroke for "show/hide transliteration": a sparkline-y
+  // glyph that reads as 'text mode' without being an actual letter (which
+  // would compete with the dua's own text). Two short underlining strokes.
+  text: "M3 6 H13 M3 9.5 H10 M3 13 H8",
+};
 
 // Font-size slider. Range 75–175 (% of baseline Arabic size). Two layouts:
 //   • vertical (`vertical: true`)   — desktop rail, parent positions it
@@ -1207,43 +1342,49 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
         }} />
       </div>
 
-      <ScriptSelector script={script} setScript={setScript} accent={accent} />
-
-      {/* Mobile-only horizontal slider. Desktop gets the vertical rail. */}
+      {/* Mobile-only font-size slider above the controls row. */}
       {isNarrow && (
         <FontSizeSlider zoom={zoom} setZoom={setZoom} accent={accent} />
       )}
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
-        <button
+      {/* Unified glass controls row — same pattern as DuaDetail, minus play
+          (routines don't have a single Arabic to recite — each step has its
+          own). */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 4,
+        marginBottom: 22,
+        flexWrap: "wrap",
+        rowGap: 10,
+      }}>
+        <GlassIconButton
           onClick={() => setShowT(!showT)}
-          style={{
-            background: "transparent", border: `1px solid ${C.line}`,
-            borderRadius: 999, padding: "7px 13px", cursor: "pointer",
-            color: showT ? C.textSub : C.textFaint, fontSize: 11.5, fontFamily: BODY,
-          }}
-        >
-          {showT ? "— Hide" : "+ Show"} transliteration
-        </button>
-        <div style={{ display: "flex", marginLeft: "auto" }}>
-          {[{ id: "en", label: "EN" }, { id: "ur", label: "اردو" }].map((l, i) => (
-            <button
-              key={l.id}
-              onClick={() => setLang(l.id)}
-              style={{
-                background: lang === l.id ? rgba(accent, 0.14) : "transparent",
-                border: `1px solid ${lang === l.id ? rgba(accent, 0.5) : C.line}`,
-                borderLeft: i > 0 ? "none" : undefined,
-                borderRadius: i === 0 ? "999px 0 0 999px" : "0 999px 999px 0",
-                padding: "7px 13px", cursor: "pointer",
-                color: lang === l.id ? C.text : C.textFaint,
-                fontSize: 11.5, fontWeight: lang === l.id ? 600 : 400,
-                fontFamily: l.id === "ur" ? ARABIC_URDU : BODY,
-              }}
-            >
-              {l.label}
-            </button>
-          ))}
+          active={showT}
+          accent={accent}
+          icon={ICONS.text}
+          title={showT ? "Hide transliteration" : "Show transliteration"}
+        />
+
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <GlassSegmented
+            value={script}
+            onChange={setScript}
+            accent={accent}
+            options={Object.values(SCRIPTS).map(s => ({
+              id: s.id, label: s.label, title: s.sublabel,
+            }))}
+          />
+          <GlassSegmented
+            value={lang}
+            onChange={setLang}
+            accent={accent}
+            options={[
+              { id: "en", label: "EN" },
+              { id: "ur", label: "اردو", font: ARABIC_URDU },
+            ]}
+          />
         </div>
       </div>
 
