@@ -4,6 +4,7 @@ import DUAS_RAW       from "./content/duas.json";
 import ADHKAR_RAW     from "./content/adhkar.json";
 import ROUTINES_RAW   from "./content/routines.json";
 import TAXONOMY       from "./content/taxonomy.json";
+import SectionOverview from "./SectionOverview.jsx";
 
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
@@ -774,17 +775,20 @@ const Sidebar = React.memo(function Sidebar({
         ))}
       </div>
 
-      {/* Lens caption */}
-      <div style={{
-        padding: "11px 18px 8px",
-        fontFamily: BODY, fontSize: 11, color: C.textFaint,
-        fontStyle: "italic", letterSpacing: "0.01em",
-      }}>
-        {lens === "moods"    && "Find a dua by the state of your heart"}
-        {lens === "timings"  && "Find a dua by the hour of your day"}
-        {lens === "sources"  && "Browse by the collection it comes from"}
-        {lens === "routines" && "Short sequences to recite together"}
-      </div>
+      {/* Lens caption. Desktop only: on mobile the inline SectionOverview
+          below carries the tagline and the how-to-use guidance. */}
+      {!isNarrow && (
+        <div style={{
+          padding: "11px 18px 8px",
+          fontFamily: BODY, fontSize: 11, color: C.textFaint,
+          fontStyle: "italic", letterSpacing: "0.01em",
+        }}>
+          {lens === "moods"    && "Find a dua by the state of your heart"}
+          {lens === "timings"  && "Find a dua by the hour of your day"}
+          {lens === "sources"  && "Browse by the collection it comes from"}
+          {lens === "routines" && "Short sequences to recite together"}
+        </div>
+      )}
 
       {/* Scrollable navigation body */}
       <div className="thinscroll" style={{
@@ -792,6 +796,9 @@ const Sidebar = React.memo(function Sidebar({
         padding: "2px 14px 22px",
         maxHeight: isNarrow ? "none" : undefined,
       }}>
+        {/* Mobile: the section overview (what this is, how to use it) sits at
+            the top of the list so the user is oriented before any prayers. */}
+        {isNarrow && <SectionOverview lens={lens} variant="inline" />}
         {lens === "routines"
           ? ROUTINES.map(r => (
               <RoutineListItem
@@ -1754,10 +1761,11 @@ export default function App() {
     () => lens === "routines" ? [] : groupsForLens(lens),
     [lens]
   );
+  // Entering a lens no longer auto-opens the first category. The user lands on
+  // the SectionOverview (what this section is, how to use it) and chooses where
+  // to begin, instead of being dropped straight into the first category's duas.
   useEffect(() => {
-    if (lens !== "routines" && groups.length) setOpenGroup(groups[0].id);
-    else setOpenGroup(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setOpenGroup(null);
   }, [lens]);
 
   const speak = useCallback((text) => {
@@ -1818,7 +1826,18 @@ export default function App() {
   // each time. Using a function call inline keeps the existing DuaDetail /
   // RoutineDetail instances mounted across normal state updates.
   const renderDetailBody = () => {
-    if (!selected) return <Welcome setLens={setLens} script={script} />;
+    if (!selected) {
+      return (
+        <SectionOverview
+          lens={lens}
+          groups={groups}
+          routines={ROUTINES}
+          onPickGroup={setOpenGroup}
+          onSelectRoutine={selectRoutine}
+          variant="panel"
+        />
+      );
+    }
     if (selected.type === "routine") {
       return (
         <RoutineDetail

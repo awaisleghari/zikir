@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { MantineProvider } from "@mantine/core";
 import App from "./App.jsx";
+import { theme } from "./theme.js";
 import ZikirLanding from "./landing/ZikirLanding.jsx";
 import ZikirLandingMobile from "./landing/ZikirLandingMobile.jsx";
 
@@ -12,7 +14,9 @@ import ZikirLandingMobile from "./landing/ZikirLandingMobile.jsx";
 //      screens get ZikirLanding (the interactive 99-Names constellation).
 //   2. User clicks Enter. The landing runs its full entry sequence (~3.5s,
 //      identical timing on both), then calls onEnter.
-//   3. We flip phase to "app". Landing unmounts. App mounts and fades in.
+//   3. We flip phase to "app". Landing unmounts. App mounts and fades in,
+//      wrapped in MantineProvider (the landings are bespoke and stay outside
+//      it, so Mantine's theme/context only governs the dashboard).
 //
 // The landing choice is made once, at initial mount, and deliberately does NOT
 // react to resize. A landing isn't a layout a user resizes through in practice,
@@ -23,8 +27,8 @@ import ZikirLandingMobile from "./landing/ZikirLandingMobile.jsx";
 // To REMOVE the landing entirely at a later stage:
 //   1. Delete `src/landing/`
 //   2. Delete this file (`src/Root.jsx`)
-//   3. In `src/main.jsx`, replace `import Root` with `import App` and render
-//      <App /> instead of <Root />.
+//   3. In `src/main.jsx`, render <App /> inside <MantineProvider> instead of
+//      <Root />.
 // The rest of the app is untouched.
 
 // Phones get the mobile landing; tablets and up keep the constellation. The
@@ -42,7 +46,11 @@ export default function Root() {
     const Landing = isMobile ? ZikirLandingMobile : ZikirLanding;
     return <Landing onEnter={() => setPhase("app")} />;
   }
-  return <AppFadeIn />;
+  return (
+    <MantineProvider theme={theme} defaultColorScheme="dark">
+      <AppFadeIn />
+    </MantineProvider>
+  );
 }
 
 // Brief opacity fade-in on the app's first render, so the transition from
