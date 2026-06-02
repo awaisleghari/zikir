@@ -1599,6 +1599,13 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
   );
 }
 
+/*
+  Welcome screen, superseded by SectionOverview (which now renders whenever no
+  dua or routine is selected). Kept commented out rather than deleted, in case
+  we fold it back in later. To restore: remove this opening comment marker and
+  the closing marker just below the function, then render <Welcome ... /> again
+  from renderDetailBody.
+
 function Welcome({ setLens, script }) {
   return (
     <div className="detailIn" style={{ maxWidth: 560, margin: "0 auto", textAlign: "center" }}>
@@ -1676,6 +1683,7 @@ function Welcome({ setLens, script }) {
     </div>
   );
 }
+*/
 
 // ─── Main App ────────────────────────────────────────────────────────────────
 
@@ -1915,17 +1923,33 @@ export default function App() {
 
       <div style={{ position: "relative", padding: "26px 30px 60px" }}>
         {overlay ? (
-          <button
-            onClick={clearSelection}
-            style={{
-              background: "transparent", border: `1px solid ${C.line}`,
-              borderRadius: 999, padding: "8px 16px", cursor: "pointer",
-              color: C.textSub, fontSize: 12.5, fontFamily: BODY,
-              display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 24,
-            }}
-          >
-            <span style={{ fontSize: 13 }}>←</span> Back to navigation
-          </button>
+          <div style={{ marginBottom: 22 }}>
+            <button
+              onClick={clearSelection}
+              style={{
+                background: "transparent", border: `1px solid ${C.line}`,
+                borderRadius: 999, padding: "8px 16px", cursor: "pointer",
+                color: C.textSub, fontSize: 12.5, fontFamily: BODY,
+                display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 12,
+              }}
+            >
+              <span style={{ fontSize: 13 }}>←</span> Back to navigation
+            </button>
+            {/* Section switcher. Lets the user jump to another section from
+                inside a dua on mobile, where the sidebar tabs are hidden behind
+                this overlay. pickLens clears the open item, so tapping a tab
+                also closes the overlay and lands on that section's overview. */}
+            <div style={{ display: "flex", gap: 6 }}>
+              {LENSES.map(l => (
+                <LensTab
+                  key={l.id}
+                  lens={l}
+                  active={lens === l.id}
+                  onClick={() => pickLens(l.id)}
+                />
+              ))}
+            </div>
+          </div>
         ) : selected ? (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
             <button
