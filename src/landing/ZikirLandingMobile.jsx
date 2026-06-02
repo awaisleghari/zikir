@@ -178,6 +178,17 @@ const STYLES = `
     50%{opacity:var(--hi,0.85);transform:scale(1);}
   }
 
+  /* The scene wraps every background layer and the page. The exit fade is a
+     single group-opacity transition on this wrapper — fading the layers
+     individually does NOT work, because .zkm-page (rise) and .zkm-star
+     (glimmer) hold their own opacity via animations, which outrank a plain
+     opacity rule in the cascade. opacity on the wrapper composites the whole
+     subtree regardless, and (unlike transform) doesn't re-anchor the
+     position:fixed layers, so nothing shifts during the fade. */
+  .zkm-scene{
+    transition:opacity 1.1s ease;
+  }
+
   /* ---- layout ---- */
   .zkm-page{
     position:relative;
@@ -278,13 +289,8 @@ const STYLES = `
   /* ─── Entry transition ──────────────────────────────────────────
      Grafted from the desktop landing so the prayer feels identical on both.
      On Enter the scene fades out and the Bismillah is revealed for a beat. */
-  .zkm-root.zkm-entering .zkm-sky,
-  .zkm-root.zkm-entering .zkm-fog,
-  .zkm-root.zkm-entering .zkm-grain,
-  .zkm-root.zkm-entering .zkm-stars,
-  .zkm-root.zkm-entering .zkm-page{
+  .zkm-root.zkm-entering .zkm-scene{
     opacity:0;
-    transition:opacity 1.1s ease;
     pointer-events:none;
   }
   .zkm-veil{
@@ -355,60 +361,64 @@ export default function ZikirLandingMobile({ onEnter }) {
     <>
       <style>{STYLES}</style>
       <div className={`zkm-root ${entered ? "zkm-entering" : ""}`}>
-        <div className="zkm-sky" aria-hidden="true" />
+        {/* Everything that fades out on Enter lives inside .zkm-scene. The
+            Bismillah veil is a sibling below, so it stays lit while this fades. */}
+        <div className="zkm-scene">
+          <div className="zkm-sky" aria-hidden="true" />
 
-        <div className="zkm-fog" aria-hidden="true">
-          <span className="zkm-glow zkm-g1" />
-          <span className="zkm-glow zkm-g2" />
-          <span className="zkm-glow zkm-g3" />
-          <span className="zkm-glow zkm-g4" />
-          <span className="zkm-glow zkm-g5" />
-        </div>
-
-        <div className="zkm-grain" aria-hidden="true" />
-
-        <div className="zkm-stars" aria-hidden="true">
-          {stars.map((s, i) => (
-            <span
-              key={i}
-              className="zkm-star"
-              style={{
-                left: `${s.x}%`,
-                top: `${s.y}%`,
-                width: `${s.size}px`,
-                height: `${s.size}px`,
-                background: s.color,
-                boxShadow: `0 0 ${(s.size * 2.4).toFixed(1)}px ${s.color}`,
-                "--dur": `${s.dur}s`,
-                "--delay": `${s.delay}s`,
-                "--hi": s.hi,
-                "--lo": s.lo,
-              }}
-            />
-          ))}
-        </div>
-
-        <main className="zkm-page" data-screen-label="Zikir landing">
-          <header className="zkm-mark-wrap">
-            <h1 className="zkm-wordmark">Zikir</h1>
-            <hr className="zkm-rule" />
-            <p className="zkm-kicker">Duas from the Quran and Sunnah</p>
-          </header>
-
-          <div className="zkm-enter-wrap">
-            <button className="zkm-enter" type="button" onClick={handleEnter}>
-              Enter
-            </button>
+          <div className="zkm-fog" aria-hidden="true">
+            <span className="zkm-glow zkm-g1" />
+            <span className="zkm-glow zkm-g2" />
+            <span className="zkm-glow zkm-g3" />
+            <span className="zkm-glow zkm-g4" />
+            <span className="zkm-glow zkm-g5" />
           </div>
 
-          <p className="zkm-copy">
-            What is Zikir but the heart’s cry to its{" "}
-            <span className="zkm-accent">Belonging</span>, a sacred conversation
-            that never ends? It is the gathering of travelers at the wellspring,
-            drinking deep so they might find the strength to walk through the
-            fires of this world unbroken.
-          </p>
-        </main>
+          <div className="zkm-grain" aria-hidden="true" />
+
+          <div className="zkm-stars" aria-hidden="true">
+            {stars.map((s, i) => (
+              <span
+                key={i}
+                className="zkm-star"
+                style={{
+                  left: `${s.x}%`,
+                  top: `${s.y}%`,
+                  width: `${s.size}px`,
+                  height: `${s.size}px`,
+                  background: s.color,
+                  boxShadow: `0 0 ${(s.size * 2.4).toFixed(1)}px ${s.color}`,
+                  "--dur": `${s.dur}s`,
+                  "--delay": `${s.delay}s`,
+                  "--hi": s.hi,
+                  "--lo": s.lo,
+                }}
+              />
+            ))}
+          </div>
+
+          <main className="zkm-page" data-screen-label="Zikir landing">
+            <header className="zkm-mark-wrap">
+              <h1 className="zkm-wordmark">Zikir</h1>
+              <hr className="zkm-rule" />
+              <p className="zkm-kicker">Duas from the Quran and Sunnah</p>
+            </header>
+
+            <div className="zkm-enter-wrap">
+              <button className="zkm-enter" type="button" onClick={handleEnter}>
+                Enter
+              </button>
+            </div>
+
+            <p className="zkm-copy">
+              What is Zikir but the heart’s cry to its{" "}
+              <span className="zkm-accent">Belonging</span>, a sacred
+              conversation that never ends? It is the gathering of travelers at
+              the wellspring, drinking deep so they might find the strength to
+              walk through the fires of this world unbroken.
+            </p>
+          </main>
+        </div>
 
         <div className="zkm-veil" aria-hidden={!entered}>
           <div className="zkm-veil-content">
