@@ -1799,6 +1799,15 @@ export default function App() {
     setSelected(null);
   }, [stop]);
 
+  // Switching sections (the lens tabs) is top-level navigation: it closes any
+  // open dua/routine and returns to the new section's overview. Without this,
+  // clicking a tab while a dua was open changed the sidebar but left the detail
+  // pane stuck on the dua, so it looked like nothing happened.
+  const pickLens = useCallback((id) => {
+    clearSelection();
+    setLens(id);
+  }, [clearSelection]);
+
   // The escape-to-close handler reads the latest `selected` via a ref so the
   // effect doesn't re-mount on every state change.
   const selectedRef = useRef(selected);
@@ -1944,7 +1953,7 @@ export default function App() {
       height: isNarrow ? "auto" : "100vh",
     }}>
       <Sidebar
-        lens={lens} setLens={setLens}
+        lens={lens} setLens={pickLens}
         groups={groups}
         openGroup={openGroup} setOpenGroup={setOpenGroup}
         selected={selected}
