@@ -5,6 +5,7 @@ import ADHKAR_RAW     from "./content/adhkar.json";
 import ROUTINES_RAW   from "./content/routines.json";
 import TAXONOMY       from "./content/taxonomy.json";
 import SectionOverview from "./SectionOverview.jsx";
+import { C, LENS_COLOR } from "./palette.js";
 
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
@@ -399,28 +400,9 @@ function rgba(hex, a) {
 }
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
-
-const C = {
-  bg:        "#16161a",
-  void:      "#010101",
-  panel:     "#1a1f33",
-  surface:   "#232946",
-  surfaceHi: "#2b3252",
-  text:      "#fffffe",
-  textSub:   "#b8c1ec",
-  textMuted: "#94a1b2",
-  textFaint: "#72757e",
-  line:      "rgba(184,193,236,0.12)",
-  lineHi:    "rgba(184,193,236,0.28)",
-};
-
-// Lens tab colors — one signature per top-level tab.
-const LENS_COLOR = {
-  moods:    "#e58fa0",
-  timings:  "#f5b14e",
-  sources:  "#3dd0c4",
-  routines: "#7f5af0",
-};
+// C (color tokens) and LENS_COLOR live in ./palette.js, the single source of
+// truth for the app's color world (imported at the top of this file). Swapping
+// the whole palette is a one-file edit there.
 
 const SERIF  = "'Cormorant Garamond', Georgia, serif";
 const BODY   = "'Source Serif 4', Georgia, serif";
@@ -742,26 +724,26 @@ const Sidebar = React.memo(function Sidebar({
       display: "flex", flexDirection: "column",
     }}>
       {/* Brand */}
-      <div style={{ padding: "20px 20px 14px", borderBottom: `1px solid ${C.line}` }}>
+      <div style={{ padding: "22px 20px 16px", borderBottom: `1px solid ${C.line}` }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
           <span style={{
-            fontFamily: SERIF, fontSize: 24, fontWeight: 500, color: C.text,
-            letterSpacing: "-0.01em",
+            fontFamily: SERIF, fontSize: 26, fontWeight: 600, color: C.gold,
+            letterSpacing: "0.005em", textShadow: `0 0 26px ${rgba(C.gold, 0.28)}`,
           }}>
             Zikir
           </span>
           <span style={{
-            fontFamily: ARABIC_URDU, fontSize: "1.25rem", color: C.textSub,
-            marginLeft: "auto", opacity: 0.8,
+            fontFamily: ARABIC_URDU, fontSize: "1.3rem", color: C.goldSoft,
+            marginLeft: "auto", opacity: 0.9,
           }}>
             ذِكْر
           </span>
         </div>
         <div style={{
-          fontFamily: BODY, fontSize: 10.5, color: C.textFaint,
-          letterSpacing: "0.04em", marginTop: 4,
+          fontFamily: BODY, fontSize: 10, color: C.textMuted,
+          letterSpacing: "0.14em", marginTop: 6, textTransform: "uppercase",
         }}>
-          Duas from the Quran &amp; Sunnah · authenticated
+          Duas from the Quran &amp; Sunnah
         </div>
       </div>
 
@@ -1830,7 +1812,7 @@ export default function App() {
   }, [clearSelection]);
 
   const detailAccent = !selected
-    ? "#7f5af0"
+    ? C.gold
     : selected.type === "routine"
       ? selected.routine.color
       : duaColor(selected.dua);

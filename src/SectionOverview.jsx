@@ -1,4 +1,5 @@
 import { Box, Stack, Group, Title, Text, SimpleGrid, UnstyledButton } from "@mantine/core";
+import { C, LENS_COLOR } from "./palette.js";
 
 // ─── SectionOverview ──────────────────────────────────────────────────────────
 // Shown when a lens (Moods, Timings, Sources, Routines) is active but the user
@@ -23,13 +24,13 @@ import { Box, Stack, Group, Title, Text, SimpleGrid, UnstyledButton } from "@man
 //   onSelectRoutine(routine)
 //   variant         — "panel" | "inline"
 
-// Palette pulled from the app's inline tokens so the overview matches the
-// dashboard exactly, independent of Mantine's default surface colors.
-const INK = "#fffffe";
-const INK_SUB = "#b8c1ec";
-const INK_FAINT = "#8a90b8";
-const LINE = "rgba(184,193,236,0.12)";
-const PANEL = "#1a1f33";
+// Palette pulled from the shared tokens (src/palette.js) so the overview tracks
+// the app's color world automatically.
+const INK = C.text;
+const INK_SUB = C.textSub;
+const INK_FAINT = C.textMuted;
+const LINE = C.line;
+const PANEL = C.panel;
 const ARABIC_FONT = "'Noto Nastaliq Urdu', 'Amiri', 'Scheherazade New', serif";
 
 // hex (#rrggbb) + alpha -> rgba() string, for accent tints.
@@ -45,7 +46,7 @@ const LENS_COPY = {
   moods: {
     label: "Moods",
     glyph: "♡",
-    accent: "#7f5af0",
+    accent: LENS_COLOR.moods,
     tagline: "Find a dua by the state of your heart.",
     what: "These supplications are gathered by the condition of the heart. When you are anxious, grieving, in pain, or full of gratitude, you can turn to words that the Quran and the Sunnah already gave for that very state.",
     how: "Choose the feeling that sits closest to where you are right now, then read slowly through the duas collected beneath it. Begin with whichever one settles you, and return to the others when there is time.",
@@ -53,7 +54,7 @@ const LENS_COPY = {
   timings: {
     label: "Timings",
     glyph: "☾",
-    accent: "#f0a93d",
+    accent: LENS_COLOR.timings,
     tagline: "Find a dua by the hour of your day.",
     what: "Here the supplications are arranged around the hours of the day, from the moment you wake to the close of the evening. They follow the practice of meeting each part of the day with its own remembrance.",
     how: "Open the time of day you are in and read what belongs to it. The morning and evening collections are the fullest, and they reward an unhurried sitting.",
@@ -61,7 +62,7 @@ const LENS_COPY = {
   sources: {
     label: "Sources",
     glyph: "❖",
-    accent: "#2cb67d",
+    accent: LENS_COLOR.sources,
     tagline: "Browse by the collection a dua comes from.",
     what: "In this view the duas are organized by the collection that preserved them, from the Quran itself to the major books of hadith such as Bukhari, Muslim, and Tirmidhi. Every entry carries its reference so you can trace it to its origin.",
     how: "Choose a collection to see the supplications drawn from it. This is the view to reach for when you want to study by source, or when you already know the reference you are looking for.",
@@ -69,7 +70,7 @@ const LENS_COPY = {
   routines: {
     label: "Routines",
     glyph: "✦",
-    accent: "#e88aa6",
+    accent: LENS_COLOR.routines,
     tagline: "Short sequences meant to be recited together.",
     what: "A routine is a sequence of supplications recited together, in order, a set number of times. Each one gathers several duas into a single sitting, such as the protections of the morning or the salutations sent upon the Prophet ﷺ.",
     how: "Choose a routine to see its steps and the count for each. Move through them in the order given, and let the repetition steady the heart rather than hurrying to the end.",
