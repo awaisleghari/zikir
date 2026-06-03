@@ -1892,7 +1892,14 @@ export default function App() {
         height: "100vh",
         overflowY: "auto",
         position: overlay ? "fixed" : "relative",
-        inset: overlay ? 0 : undefined,
+        // Mobile overlay: pin top/left/right and let the top-anchored 100vh
+        // over-cover the bottom. Using `inset:0` set `bottom:0`, which on iOS
+        // pins the overlay to the shrinking visual-viewport bottom; when the
+        // Safari toolbar collapses on scroll, the revealed strip showed the
+        // page underneath. No `bottom` avoids that.
+        top: overlay ? 0 : undefined,
+        left: overlay ? 0 : undefined,
+        right: overlay ? 0 : undefined,
         zIndex: overlay ? 100 : 1,
       }}
     >
