@@ -6,7 +6,7 @@ import ROUTINES_RAW   from "./content/routines.json";
 import TAXONOMY       from "./content/taxonomy.json";
 import SectionOverview from "./SectionOverview.jsx";
 import { C, LENS_COLOR } from "./palette.js";
-import { SegmentedControl, Switch, ActionIcon, NavLink, Button, Badge } from "@mantine/core";
+import { SegmentedControl, Switch, ActionIcon, NavLink, Button, Badge, RingProgress, UnstyledButton } from "@mantine/core";
 
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
@@ -1201,32 +1201,30 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
           </div>
         </div>
 
-        <button
+        <UnstyledButton
           onClick={onTap}
-          style={{
-            flexShrink: 0, width: 58, height: 58, borderRadius: 999,
-            background: done ? accent : rgba(accent, 0.1),
-            border: `1.5px solid ${done ? accent : rgba(accent, 0.5)}`,
-            cursor: "pointer",
-            display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            transition: "all 0.18s ease",
-            color: done ? C.void : accent,
-          }}
+          aria-label={done ? "Completed" : `Recited ${count} of ${target}; tap to count`}
+          style={{ flexShrink: 0, borderRadius: 999 }}
         >
-          {done ? (
-            <span style={{ fontSize: 20 }}>✓</span>
-          ) : (
-            <>
-              <span style={{ fontFamily: BODY, fontSize: 17, fontWeight: 700, lineHeight: 1 }}>
-                {count}
-              </span>
-              <span style={{ fontFamily: BODY, fontSize: 9.5, opacity: 0.7, marginTop: 1 }}>
-                of {target}
-              </span>
-            </>
-          )}
-        </button>
+          <RingProgress
+            size={58}
+            thickness={4}
+            roundCaps
+            sections={[{ value: Math.min(100, (count / target) * 100), color: accent }]}
+            label={
+              <div style={{ textAlign: "center", color: done ? accent : C.text, fontFamily: BODY }}>
+                {done ? (
+                  <span style={{ fontSize: 18 }}>✓</span>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1 }}>{count}</div>
+                    <div style={{ fontSize: 8.5, opacity: 0.7, marginTop: 1 }}>of {target}</div>
+                  </>
+                )}
+              </div>
+            }
+          />
+        </UnstyledButton>
       </div>
 
       <div style={{
@@ -1276,7 +1274,7 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
         fontFamily: BODY, fontSize: 10.5, color: C.textFaint,
         textAlign: "center", marginTop: 12, letterSpacing: "0.04em",
       }}>
-        {done ? "completed" : "tap the circle as you recite"}
+        {done ? "completed" : "tap the ring as you recite"}
       </div>
     </div>
   );
