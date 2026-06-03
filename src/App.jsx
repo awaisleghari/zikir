@@ -628,28 +628,32 @@ const Sidebar = React.memo(function Sidebar({
       // mounted (display:none, not unmounted) so its state survives.
       display: hidden ? "none" : "flex", flexDirection: "column",
     }}>
-      {/* Brand — clicking the wordmark returns to the landing/entrance */}
+      {/* Brand — only the words return to the landing; the empty space between
+          them is deliberately not clickable. */}
       <div style={{ padding: "22px 20px 16px", borderBottom: `1px solid ${C.line}` }}>
-        <UnstyledButton
-          onClick={onExitToLanding}
-          title="Return to the entrance"
-          style={{ display: "block", width: "100%" }}
-        >
-          <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
-            <span style={{
+        <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
+          <UnstyledButton
+            onClick={onExitToLanding}
+            title="Return to the entrance"
+            style={{
               fontFamily: SERIF, fontSize: 26, fontWeight: 600, color: C.gold,
               letterSpacing: "0.005em", textShadow: `0 0 26px ${rgba(C.gold, 0.28)}`,
-            }}>
-              Zikir
-            </span>
-            <span style={{
+              lineHeight: 1,
+            }}
+          >
+            Zikir
+          </UnstyledButton>
+          <UnstyledButton
+            onClick={onExitToLanding}
+            title="Return to the entrance"
+            style={{
               fontFamily: ARABIC_URDU, fontSize: "1.3rem", color: C.goldSoft,
-              marginLeft: "auto", opacity: 0.9,
-            }}>
-              ذِكْر
-            </span>
-          </div>
-        </UnstyledButton>
+              marginLeft: "auto", opacity: 0.9, lineHeight: 1,
+            }}
+          >
+            ذِكْر
+          </UnstyledButton>
+        </div>
         <div style={{
           fontFamily: BODY, fontSize: 10, color: C.textMuted,
           letterSpacing: "0.14em", marginTop: 6, textTransform: "uppercase",
@@ -1604,7 +1608,19 @@ export default function App({ onExitToLanding }) {
     } catch {}
     return "moods";
   });
-  const [openGroup, setOpenGroup] = useState(null);
+  const [openGroup, setOpenGroup] = useState(() => {
+    // Restore the expanded category on refresh, but only if it belongs to the
+    // restored section.
+    try {
+      const g = window.localStorage.getItem("zikir.group");
+      if (g) {
+        const lv = window.localStorage.getItem("zikir.lens");
+        const lensId = LENSES.some(l => l.id === lv) ? lv : "moods";
+        if (lensId !== "routines" && groupsForLens(lensId).some(x => x.id === g)) return g;
+      }
+    } catch {}
+    return null;
+  });
   const [selected, setSelected] = useState(() => {
     // Restore the open dua/routine after a refresh. Stored as {type, id} and
     // re-resolved against current content; falls back to nothing if it's gone.
@@ -1640,6 +1656,12 @@ export default function App({ onExitToLanding }) {
       }
     } catch {}
   }, [selected]);
+  useEffect(() => {
+    try {
+      if (openGroup) window.localStorage.setItem("zikir.group", openGroup);
+      else window.localStorage.removeItem("zikir.group");
+    } catch {}
+  }, [openGroup]);
 
   // Quran script preference. Persisted to localStorage so it survives reload.
   // The lazy initializer reads from storage on first mount only.
@@ -1713,10 +1735,12 @@ export default function App({ onExitToLanding }) {
     () => lens === "routines" ? [] : groupsForLens(lens),
     [lens]
   );
-  // Entering a lens no longer auto-opens the first category. The user lands on
-  // the SectionOverview (what this section is, how to use it) and chooses where
-  // to begin, instead of being dropped straight into the first category's duas.
+  // Switching sections collapses the open category (the user lands on the
+  // SectionOverview and chooses where to begin). Skipped on the initial mount,
+  // so a category restored from a refresh stays expanded.
+  const lensInited = useRef(false);
   useEffect(() => {
+    if (!lensInited.current) { lensInited.current = true; return; }
     setOpenGroup(null);
   }, [lens]);
 
