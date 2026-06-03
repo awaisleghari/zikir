@@ -455,7 +455,7 @@ const SOURCE_COLOR = Object.fromEntries(SOURCES.map(s => [s.id, s.color]));
 const LENSES = [
   { id: "moods",    label: "Moods",    glyph: "♡" },
   { id: "timings",  label: "Timings",  glyph: "☾" },
-  { id: "sources",  label: "Sources",  glyph: "❖" },
+  { id: "sources",  label: "Library",  glyph: "❖" },
   { id: "routines", label: "Routines", glyph: "✦" },
 ];
 

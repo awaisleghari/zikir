@@ -60,7 +60,7 @@ const LENS_COPY = {
     how: "Open the time of day you are in and read what belongs to it. The morning and evening collections are the fullest, and they reward an unhurried sitting.",
   },
   sources: {
-    label: "Sources",
+    label: "Library",
     glyph: "❖",
     accent: LENS_COLOR.sources,
     tagline: "Browse by the collection a dua comes from.",
