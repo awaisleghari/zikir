@@ -613,7 +613,7 @@ function RoutineListItem({ routine, selected, onClick }) {
 
 const Sidebar = React.memo(function Sidebar({
   lens, setLens, groups, openGroup, setOpenGroup,
-  selected, onSelectDua, onSelectRoutine, isNarrow, script, hidden,
+  selected, onSelectDua, onSelectRoutine, isNarrow, script, hidden, onExitToLanding,
 }) {
   return (
     <div style={{
@@ -628,22 +628,28 @@ const Sidebar = React.memo(function Sidebar({
       // mounted (display:none, not unmounted) so its state survives.
       display: hidden ? "none" : "flex", flexDirection: "column",
     }}>
-      {/* Brand */}
+      {/* Brand — clicking the wordmark returns to the landing/entrance */}
       <div style={{ padding: "22px 20px 16px", borderBottom: `1px solid ${C.line}` }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
-          <span style={{
-            fontFamily: SERIF, fontSize: 26, fontWeight: 600, color: C.gold,
-            letterSpacing: "0.005em", textShadow: `0 0 26px ${rgba(C.gold, 0.28)}`,
-          }}>
-            Zikir
-          </span>
-          <span style={{
-            fontFamily: ARABIC_URDU, fontSize: "1.3rem", color: C.goldSoft,
-            marginLeft: "auto", opacity: 0.9,
-          }}>
-            ذِكْر
-          </span>
-        </div>
+        <UnstyledButton
+          onClick={onExitToLanding}
+          title="Return to the entrance"
+          style={{ display: "block", width: "100%" }}
+        >
+          <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
+            <span style={{
+              fontFamily: SERIF, fontSize: 26, fontWeight: 600, color: C.gold,
+              letterSpacing: "0.005em", textShadow: `0 0 26px ${rgba(C.gold, 0.28)}`,
+            }}>
+              Zikir
+            </span>
+            <span style={{
+              fontFamily: ARABIC_URDU, fontSize: "1.3rem", color: C.goldSoft,
+              marginLeft: "auto", opacity: 0.9,
+            }}>
+              ذِكْر
+            </span>
+          </div>
+        </UnstyledButton>
         <div style={{
           fontFamily: BODY, fontSize: 10, color: C.textMuted,
           letterSpacing: "0.14em", marginTop: 6, textTransform: "uppercase",
@@ -1590,15 +1596,50 @@ function Welcome({ setLens, script }) {
 
 // ─── Main App ────────────────────────────────────────────────────────────────
 
-export default function App() {
-  const [lens, setLens] = useState("moods");
+export default function App({ onExitToLanding }) {
+  const [lens, setLens] = useState(() => {
+    try {
+      const v = window.localStorage.getItem("zikir.lens");
+      if (LENSES.some(l => l.id === v)) return v;
+    } catch {}
+    return "moods";
+  });
   const [openGroup, setOpenGroup] = useState(null);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState(() => {
+    // Restore the open dua/routine after a refresh. Stored as {type, id} and
+    // re-resolved against current content; falls back to nothing if it's gone.
+    try {
+      const raw = window.localStorage.getItem("zikir.sel");
+      if (raw) {
+        const { type, id } = JSON.parse(raw);
+        if (type === "dua" && DUA_BY_ID[id]) return { type: "dua", id, dua: DUA_BY_ID[id] };
+        if (type === "routine") {
+          const r = ROUTINES.find(x => x.id === id);
+          if (r) return { type: "routine", id, routine: r };
+        }
+      }
+    } catch {}
+    return null;
+  });
   const [lang, setLang] = useState("en");
   const [speaking, setSpeaking] = useState(false);
   const [showT, setShowT] = useState(true);
   const [ttsOk, setTtsOk] = useState(true);
   const [isNarrow, setIsNarrow] = useState(false);
+
+  // Persist the section and the open dua/routine so a refresh stays in place.
+  useEffect(() => {
+    try { window.localStorage.setItem("zikir.lens", lens); } catch {}
+  }, [lens]);
+  useEffect(() => {
+    try {
+      if (selected) {
+        window.localStorage.setItem("zikir.sel", JSON.stringify({ type: selected.type, id: selected.id }));
+      } else {
+        window.localStorage.removeItem("zikir.sel");
+      }
+    } catch {}
+  }, [selected]);
 
   // Quran script preference. Persisted to localStorage so it survives reload.
   // The lazy initializer reads from storage on first mount only.
@@ -1898,6 +1939,7 @@ export default function App() {
         isNarrow={isNarrow}
         script={script}
         hidden={isNarrow && !!selected}
+        onExitToLanding={onExitToLanding}
       />
       {!isNarrow && detailPane(false)}
       {isNarrow && selected && detailPane(true)}
