@@ -6,7 +6,7 @@ import ROUTINES_RAW   from "./content/routines.json";
 import TAXONOMY       from "./content/taxonomy.json";
 import SectionOverview from "./SectionOverview.jsx";
 import { C, LENS_COLOR } from "./palette.js";
-import { SegmentedControl, Switch, ActionIcon, NavLink, Button, Badge, RingProgress, UnstyledButton } from "@mantine/core";
+import { SegmentedControl, Switch, ActionIcon, NavLink, Button, Badge, RingProgress, UnstyledButton, Stack, Text, Divider } from "@mantine/core";
 
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
@@ -738,6 +738,20 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
   const isUr = lang === "ur";
   const translation = translateOf(dua, lang);
 
+  // Detail sections, rendered open under headings (no box). The richer fields
+  // (context, story, whenToRecite, howOften, virtue) are optional and authored
+  // per dua from its sources; a dua not yet given them falls back to the
+  // existing `benefit` under "When to recite".
+  const hasRich = !!(dua.context || dua.story || dua.whenToRecite || dua.howOften || dua.virtue);
+  const detailSections = [
+    { label: "Source", text: dua.source },
+    { label: "Context", text: dua.context },
+    { label: "The story", text: dua.story },
+    { label: "When to recite", text: hasRich ? dua.whenToRecite : dua.benefit },
+    { label: "How often", text: dua.howOften },
+    { label: "Virtue", text: dua.virtue },
+  ].filter((s) => s.text);
+
   return (
     <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto", overflow: "visible" }}>
       <div style={{ marginBottom: 8 }}>
@@ -901,28 +915,25 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         {translation}
       </div>
 
-      <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 18, marginBottom: 18 }}>
-        <div style={{
-          fontSize: 10, color: C.textFaint, textTransform: "uppercase",
-          letterSpacing: "0.18em", marginBottom: 6, fontFamily: BODY,
-        }}>Source</div>
-        <div style={{ fontSize: 13, color: C.textSub, fontFamily: BODY }}>{dua.source}</div>
-      </div>
-
-      <div style={{
-        background: rgba(MOOD_COLOR.grateful || "#2cb67d", 0.10),
-        border: `1px solid ${rgba(MOOD_COLOR.grateful || "#2cb67d", 0.35)}`,
-        borderRadius: 14, padding: "16px 18px",
-      }}>
-        <div style={{
-          fontSize: 10, color: MOOD_COLOR.grateful || "#2cb67d",
-          textTransform: "uppercase",
-          letterSpacing: "0.18em", marginBottom: 8, fontFamily: BODY, fontWeight: 600,
-        }}>✦ When to recite</div>
-        <div style={{ fontSize: 14, color: C.textSub, lineHeight: 1.7, fontFamily: BODY }}>
-          {dua.benefit}
-        </div>
-      </div>
+      <Divider my={20} color={C.line} />
+      <Stack gap={18}>
+        {detailSections.map((s) => (
+          <div key={s.label}>
+            <Text style={{
+              fontSize: 10, color: C.textFaint, textTransform: "uppercase",
+              letterSpacing: "0.18em", marginBottom: 6, fontFamily: BODY,
+            }}>
+              {s.label}
+            </Text>
+            <Text style={{
+              fontSize: s.label === "Source" ? 13 : 14.5, color: C.textSub,
+              lineHeight: 1.7, fontFamily: BODY,
+            }}>
+              {s.text}
+            </Text>
+          </div>
+        ))}
+      </Stack>
 
       {!ttsOk && (
         <div style={{
