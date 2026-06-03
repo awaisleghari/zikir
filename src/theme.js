@@ -22,6 +22,9 @@ export const theme = createTheme({
     fontWeight: "600",
   },
   defaultRadius: "md",
+  // Auto-pick a readable (dark/light) label color on filled/colored surfaces,
+  // so active segments read well on gold and on the section colors.
+  autoContrast: true,
   primaryColor: "gold",
   primaryShade: { light: 6, dark: 4 },
   colors: {

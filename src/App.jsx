@@ -544,37 +544,6 @@ const translateOf = (entry, lang) =>
 
 // ─── Components ──────────────────────────────────────────────────────────────
 
-function LensTab({ lens, active, onClick }) {
-  const [hov, setHov] = useState(false);
-  const col = LENS_COLOR[lens.id];
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        flex: 1,
-        background: active ? rgba(col, 0.14) : hov ? C.surfaceHi : "transparent",
-        border: `1px solid ${active ? rgba(col, 0.55) : C.line}`,
-        borderRadius: 12,
-        padding: "9px 4px 8px",
-        cursor: "pointer",
-        transition: "all 0.16s ease",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-      }}
-    >
-      <span style={{ fontSize: 13, color: active ? col : C.textMuted }}>{lens.glyph}</span>
-      <span style={{
-        fontSize: 11, fontFamily: BODY,
-        color: active ? C.text : C.textMuted,
-        fontWeight: active ? 600 : 400,
-        letterSpacing: "0.02em",
-      }}>
-        {lens.label}
-      </span>
-    </button>
-  );
-}
 
 function GroupHeader({ group, open, onClick }) {
   const [hov, setHov] = useState(false);
@@ -754,12 +723,10 @@ const Sidebar = React.memo(function Sidebar({
 
       {/* Lens tabs */}
       <div style={{
-        display: "flex", gap: 6, padding: "12px 14px 10px",
+        padding: "12px 14px 10px",
         borderBottom: `1px solid ${C.line}`,
       }}>
-        {LENSES.map(l => (
-          <LensTab key={l.id} lens={l} active={lens === l.id} onClick={() => setLens(l.id)} />
-        ))}
+        <LensTabs value={lens} onChange={setLens} />
       </div>
 
       {/* Lens caption. Desktop only: on mobile the inline SectionOverview
@@ -1079,6 +1046,36 @@ function PlayButton({ playing, onClick, disabled }) {
         <path d={playing ? ICONS.stop : ICONS.play} fill="currentColor" />
       </svg>
     </ActionIcon>
+  );
+}
+
+// The four section tabs (Moods / Timings / Sources / Routines) as one Mantine
+// SegmentedControl. The active segment is tinted with that section's signature
+// color. Used in both the sidebar and the mobile dua header.
+const LENS_TABS_DATA = LENSES.map((l) => ({
+  value: l.id,
+  label: (
+    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 3, lineHeight: 1.1 }}>
+      <span style={{ fontSize: 14 }}>{l.glyph}</span>
+      <span style={{ fontSize: 11.5, fontWeight: 500, letterSpacing: "0.01em" }}>{l.label}</span>
+    </span>
+  ),
+}));
+
+function LensTabs({ value, onChange }) {
+  return (
+    <SegmentedControl
+      fullWidth
+      radius="md"
+      value={value}
+      onChange={onChange}
+      data={LENS_TABS_DATA}
+      color={LENS_COLOR[value]}
+      styles={{
+        root: { background: "rgba(255,255,255,0.03)", border: `1px solid ${C.line}` },
+        label: { fontFamily: BODY, padding: "7px 2px" },
+      }}
+    />
   );
 }
 
@@ -1871,16 +1868,7 @@ export default function App() {
                 mobile, so these stand in for them. pickLens clears the open
                 item, so tapping a tab also closes the overlay and lands on that
                 section's overview. */}
-            <div style={{ display: "flex", gap: 6 }}>
-              {LENSES.map(l => (
-                <LensTab
-                  key={l.id}
-                  lens={l}
-                  active={lens === l.id}
-                  onClick={() => pickLens(l.id)}
-                />
-              ))}
-            </div>
+            <LensTabs value={lens} onChange={pickLens} />
           </div>
         ) : selected ? (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
