@@ -6,7 +6,7 @@ import ROUTINES_RAW   from "./content/routines.json";
 import TAXONOMY       from "./content/taxonomy.json";
 import SectionOverview from "./SectionOverview.jsx";
 import { C, LENS_COLOR } from "./palette.js";
-import { SegmentedControl, Switch, ActionIcon } from "@mantine/core";
+import { SegmentedControl, Switch, ActionIcon, NavLink } from "@mantine/core";
 
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
@@ -546,137 +546,68 @@ const translateOf = (entry, lang) =>
 
 
 function GroupHeader({ group, open, onClick }) {
-  const [hov, setHov] = useState(false);
   return (
-    <button
+    <NavLink
+      label={group.label}
+      active={open}
+      color={group.color}
       onClick={onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        width: "100%", textAlign: "left",
-        background: open ? rgba(group.color, 0.10) : hov ? C.surface : "transparent",
-        border: `1px solid ${open ? rgba(group.color, 0.4) : C.line}`,
-        borderRadius: 11,
-        padding: "11px 13px",
-        cursor: "pointer",
-        transition: "all 0.15s ease",
-        display: "flex", alignItems: "center", gap: 10,
+      leftSection={
+        <span style={{ width: 9, height: 9, borderRadius: 3, background: group.color, display: "block",
+          boxShadow: open ? `0 0 8px ${rgba(group.color, 0.7)}` : "none" }} />
+      }
+      rightSection={
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 10.5, fontFamily: BODY, color: open ? group.color : C.textFaint }}>
+            {group.duas.length}
+          </span>
+          <span style={{ fontSize: 9, color: open ? group.color : C.textFaint,
+            transform: open ? "rotate(90deg)" : "none", transition: "transform 0.2s ease" }}>▶</span>
+        </span>
+      }
+      styles={{
+        root: { borderRadius: 10 },
+        label: { fontFamily: BODY, fontSize: 13.5, fontWeight: open ? 600 : 500 },
       }}
-    >
-      <span style={{
-        width: 9, height: 9, borderRadius: 3, flexShrink: 0,
-        background: group.color,
-        boxShadow: open ? `0 0 8px ${rgba(group.color, 0.7)}` : "none",
-        transition: "box-shadow 0.2s",
-      }} />
-      <span style={{
-        flex: 1, fontFamily: BODY, fontSize: 13.5,
-        color: open ? C.text : C.textSub,
-        fontWeight: open ? 600 : 400,
-      }}>
-        {group.label}
-      </span>
-      <span style={{
-        fontFamily: BODY, fontSize: 10.5,
-        color: open ? group.color : C.textFaint,
-        letterSpacing: "0.04em",
-      }}>
-        {group.duas.length}
-      </span>
-      <span style={{
-        color: open ? group.color : C.textFaint, fontSize: 9,
-        transform: open ? "rotate(90deg)" : "none",
-        transition: "transform 0.2s ease",
-      }}>▶</span>
-    </button>
+    />
   );
 }
 
 function DuaListItem({ dua, selected, onClick }) {
-  const [hov, setHov] = useState(false);
   const col = duaColor(dua);
   return (
-    <button
-      className="listitem"
+    <NavLink
+      label={dua.title}
+      description={dua.use}
+      active={selected}
+      color={col}
       onClick={onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        width: "100%", textAlign: "left",
-        background: selected ? rgba(col, 0.12) : hov ? C.surface : "transparent",
-        border: `1px solid ${selected ? rgba(col, 0.45) : "transparent"}`,
-        borderLeft: `2px solid ${selected || hov ? col : "transparent"}`,
-        borderRadius: 9,
-        padding: "9px 11px",
-        cursor: "pointer",
-        transition: "background 0.14s ease, border-color 0.14s ease",
-        display: "flex", flexDirection: "column", gap: 3,
+      leftSection={<span style={{ width: 6, height: 6, borderRadius: "50%", background: col, display: "block" }} />}
+      styles={{
+        root: { borderRadius: 8 },
+        label: { fontFamily: BODY, fontSize: 14, fontWeight: 500, whiteSpace: "normal" },
+        description: { fontFamily: BODY, fontSize: 11.5, fontStyle: "italic" },
       }}
-    >
-      <span style={{
-        fontFamily: BODY, fontSize: 15,
-        color: selected ? C.text : C.textSub,
-        fontWeight: 500, lineHeight: 1.25,
-      }}>
-        {dua.title}
-      </span>
-      <span style={{
-        fontFamily: BODY, fontSize: 11, color: C.textFaint,
-        fontStyle: "italic", lineHeight: 1.4,
-      }}>
-        {dua.use}
-      </span>
-    </button>
+    />
   );
 }
 
-function RoutineListItem({ routine, selected, onClick, script }) {
-  const [hov, setHov] = useState(false);
+function RoutineListItem({ routine, selected, onClick }) {
   const col = routine.color;
   return (
-    <button
+    <NavLink
+      label={routine.title}
+      description={routine.when}
+      active={selected}
+      color={col}
       onClick={onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        width: "100%", textAlign: "left",
-        background: selected ? rgba(col, 0.12) : hov ? C.surface : "transparent",
-        border: `1px solid ${selected ? rgba(col, 0.45) : C.line}`,
-        borderRadius: 11,
-        padding: "13px 14px",
-        cursor: "pointer",
-        transition: "all 0.15s ease",
-        display: "flex", flexDirection: "column", gap: 6,
-        marginBottom: 8,
+      leftSection={<span style={{ width: 8, height: 8, borderRadius: 3, background: col, display: "block" }} />}
+      styles={{
+        root: { borderRadius: 10, marginBottom: 4 },
+        label: { fontFamily: BODY, fontSize: 15, fontWeight: 500, whiteSpace: "normal" },
+        description: { fontFamily: BODY, fontSize: 11.5, fontStyle: "italic" },
       }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-        <span style={{
-          fontFamily: arabicFont(script), fontSize: `${1.1 * arabicScale(script)}rem`,
-          color: col, lineHeight: 1,
-        }}>
-          {routine.arabic}
-        </span>
-        <span style={{
-          marginLeft: "auto", fontFamily: BODY, fontSize: 10,
-          color: C.textFaint, letterSpacing: "0.05em",
-        }}>
-          {routine.steps.length} steps
-        </span>
-      </div>
-      <span style={{
-        fontFamily: BODY, fontSize: 16, fontWeight: 500,
-        color: selected ? C.text : C.textSub, lineHeight: 1.2,
-      }}>
-        {routine.title}
-      </span>
-      <span style={{
-        fontFamily: BODY, fontSize: 11.5, color: C.textFaint,
-        fontStyle: "italic", lineHeight: 1.5,
-      }}>
-        {routine.when}
-      </span>
-    </button>
+    />
   );
 }
 
