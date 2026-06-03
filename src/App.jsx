@@ -6,7 +6,7 @@ import ROUTINES_RAW   from "./content/routines.json";
 import TAXONOMY       from "./content/taxonomy.json";
 import SectionOverview from "./SectionOverview.jsx";
 import { C, LENS_COLOR } from "./palette.js";
-import { SegmentedControl, Switch, ActionIcon, NavLink } from "@mantine/core";
+import { SegmentedControl, Switch, ActionIcon, NavLink, Button, Badge } from "@mantine/core";
 
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
@@ -730,13 +730,25 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
 
   return (
     <div className="detailIn" style={{ position: "relative", maxWidth: 620, margin: "0 auto", overflow: "visible" }}>
-      <div style={{
-        fontFamily: BODY, fontSize: 12.5, color: accent,
-        letterSpacing: "0.02em", marginBottom: 6,
-        display: "flex", alignItems: "center", gap: 8,
-      }}>
-        <span style={{ fontSize: 9 }}>✦</span>
-        {dua.use}
+      <div style={{ marginBottom: 8 }}>
+        <Badge
+          variant="light"
+          radius="sm"
+          size="lg"
+          leftSection={<span style={{ fontSize: 9 }}>✦</span>}
+          styles={{
+            root: {
+              background: rgba(accent, 0.12),
+              border: `1px solid ${rgba(accent, 0.32)}`,
+              color: accent,
+              textTransform: "none",
+              fontFamily: BODY,
+              fontWeight: 500,
+            },
+          }}
+        >
+          {dua.use}
+        </Badge>
       </div>
       <div style={{
         fontFamily: BODY, fontSize: 9.5, color: C.textFaint,
@@ -1783,17 +1795,16 @@ export default function App() {
             background: C.canvas,
             borderBottom: `1px solid ${C.line}`,
           }}>
-            <button
+            <Button
               onClick={clearSelection}
-              style={{
-                background: "transparent", border: `1px solid ${C.line}`,
-                borderRadius: 999, padding: "8px 16px", cursor: "pointer",
-                color: C.textSub, fontSize: 12.5, fontFamily: BODY,
-                display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 12,
-              }}
+              variant="default"
+              size="xs"
+              radius="xl"
+              leftSection={<span style={{ fontSize: 13 }}>←</span>}
+              styles={{ root: { marginBottom: 12, fontFamily: BODY } }}
             >
-              <span style={{ fontSize: 13 }}>←</span> Back to navigation
-            </button>
+              Back to navigation
+            </Button>
             {/* Section switcher, sticky so it stays reachable while scrolling a
                 long dua. The sidebar tabs are hidden behind this overlay on
                 mobile, so these stand in for them. pickLens clears the open
@@ -1803,14 +1814,15 @@ export default function App() {
           </div>
         ) : selected ? (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-            <button
+            <ActionIcon
               onClick={clearSelection}
-              style={{
-                background: "transparent", border: `1px solid ${C.line}`,
-                borderRadius: 999, width: 30, height: 30, cursor: "pointer",
-                color: C.textFaint, fontSize: 13, fontFamily: BODY,
-              }}
-            >✕</button>
+              variant="default"
+              radius="xl"
+              size={30}
+              aria-label="Close"
+            >
+              <span style={{ fontSize: 13 }}>✕</span>
+            </ActionIcon>
           </div>
         ) : null}
 
