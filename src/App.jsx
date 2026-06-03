@@ -1167,50 +1167,71 @@ function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
   );
 }
 
+// Shift a hex color's hue by `deg` degrees, keeping its saturation and
+// lightness. Used to give each routine step its own hue within a coherent band.
+function shiftHue(hex, deg) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h /= 6;
+  }
+  h = ((((h * 360 + deg) % 360) + 360) % 360) / 360;
+  const hue2rgb = (p, q, t) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  let r2, g2, b2;
+  if (s === 0) { r2 = g2 = b2 = l; }
+  else {
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r2 = hue2rgb(p, q, h + 1 / 3);
+    g2 = hue2rgb(p, q, h);
+    b2 = hue2rgb(p, q, h - 1 / 3);
+  }
+  const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, "0");
+  return "#" + toHex(r2) + toHex(g2) + toHex(b2);
+}
+
+// Per-step color ramp: step 0 is the routine's own color; later steps drift
+// across a bounded hue band so a long routine reads as a gradient, not one flat
+// color. Each step's color drives its counter ring, its spine segment, and its
+// word-glow.
+const STEP_HUE_SPREAD = 52;
+const stepColor = (base, i, n) => shiftHue(base, (n > 1 ? i / (n - 1) : 0) * STEP_HUE_SPREAD);
+
 function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, script, isLast }) {
   const done = count >= target;
   const isUr = lang === "ur";
+  const pct = Math.min(100, (count / target) * 100);
   return (
-    <div style={{
-      // No background, no border, no rounding. The step is a section, not a
-      // card. A faint divider below (except on the last step) gives just
-      // enough separation between consecutive steps without enclosing them.
-      padding: "28px 4px 36px",
-      borderBottom: isLast ? "none" : `1px solid ${rgba(C.textSub, 0.08)}`,
-      opacity: done ? 0.7 : 1,
-      transition: "opacity 0.3s ease",
-    }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 20 }}>
-        <span style={{
-          fontFamily: BODY, fontSize: 11, color: C.textFaint,
-          letterSpacing: "0.1em", marginTop: 3, flexShrink: 0,
-        }}>
-          {String(idx + 1).padStart(2, "0")}
-        </span>
-        <div style={{ flex: 1 }}>
-          <div style={{
-            fontFamily: BODY, fontSize: 17, fontWeight: 600,
-            color: C.text, lineHeight: 1.25,
-          }}>
-            {step.title}
-          </div>
-          <div style={{
-            fontFamily: BODY, fontSize: 11, color: C.textFaint, marginTop: 3,
-          }}>
-            {step.source}
-          </div>
-        </div>
-
+    <div style={{ display: "flex", gap: 16, opacity: done ? 0.82 : 1, transition: "opacity 0.3s ease" }}>
+      {/* Left rail: the counter is a station on the spine that links the steps.
+          The segment below it fills with the step's color once it's complete,
+          so progress flows down the routine. */}
+      <div style={{ position: "relative", width: 58, flexShrink: 0 }}>
         <UnstyledButton
           onClick={onTap}
           aria-label={done ? "Completed" : `Recited ${count} of ${target}; tap to count`}
-          style={{ flexShrink: 0, borderRadius: 999 }}
+          style={{ display: "block", borderRadius: 999, position: "relative", zIndex: 1 }}
         >
           <RingProgress
             size={58}
             thickness={4}
             roundCaps
-            sections={[{ value: Math.min(100, (count / target) * 100), color: accent }]}
+            sections={[{ value: pct, color: accent }]}
             label={
               <div style={{ textAlign: "center", color: done ? accent : C.text, fontFamily: BODY }}>
                 {done ? (
@@ -1225,56 +1246,71 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
             }
           />
         </UnstyledButton>
+        {!isLast && (
+          <div style={{
+            position: "absolute", top: 58, bottom: 0, left: "calc(50% - 1px)", width: 2,
+            background: done ? accent : rgba(C.textSub, 0.14),
+            transition: "background 0.3s ease",
+          }} />
+        )}
       </div>
 
-      <div style={{
-        "--glow": rgba(accent, 0.45),
-        "--glow-soft": rgba(accent, 0.22),
-        fontFamily: arabicFont(script),
-        fontSize: `calc(${1.6 * arabicScale(script)}rem * var(--zk-arabic-scale, 1))`,
-        lineHeight: script === "indopak" ? 2.4 : 2.2,
-        direction: "rtl", textAlign: "center", color: C.text,
-        marginBottom: showT ? 10 : 6,
-        fontFeatureSettings: "'liga' 1, 'calt' 1",
-      }}>
-        {step.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
-          <span
-            key={i}
-            className="zikir-word"
-            style={{ display: "inline-block", padding: "0 0.18em" }}
-          >
-            {word}
-          </span>
-        ))}
-      </div>
-
-      {showT && (
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0, paddingBottom: isLast ? 8 : 34 }}>
         <div style={{
-          fontFamily: BODY, fontSize: 13, color: C.textSub,
-          textAlign: "center", lineHeight: 1.7, marginBottom: 8,
-          letterSpacing: "0.005em",
+          fontFamily: BODY, fontSize: 10, color: C.textFaint,
+          letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4,
         }}>
-          {step.translit}
+          Step {String(idx + 1).padStart(2, "0")}
         </div>
-      )}
+        <div style={{ fontFamily: BODY, fontSize: 17, fontWeight: 600, color: C.text, lineHeight: 1.25 }}>
+          {step.title}
+        </div>
+        <div style={{ fontFamily: BODY, fontSize: 11, color: C.textFaint, marginTop: 3 }}>
+          {step.source}
+        </div>
 
-      <div style={{
-        fontFamily: isUr ? ARABIC_URDU : BODY,
-        fontSize: isUr ? 17 : 14,
-        color: C.textMuted,
-        lineHeight: isUr ? 2.4 : 1.7,
-        textAlign: "center",
-        direction: isUr ? "rtl" : "ltr",
-        maxWidth: 480, margin: "0 auto",
-      }}>
-        {translateOf(step, lang)}
-      </div>
+        <div style={{
+          "--glow": rgba(accent, 0.45),
+          "--glow-soft": rgba(accent, 0.22),
+          fontFamily: arabicFont(script),
+          fontSize: `calc(${1.6 * arabicScale(script)}rem * var(--zk-arabic-scale, 1))`,
+          lineHeight: script === "indopak" ? 2.4 : 2.2,
+          direction: "rtl", textAlign: "center", color: C.text,
+          margin: showT ? "18px 0 10px" : "18px 0 8px",
+          fontFeatureSettings: "'liga' 1, 'calt' 1",
+        }}>
+          {step.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
+            <span key={i} className="zikir-word" style={{ display: "inline-block", padding: "0 0.18em" }}>
+              {word}
+            </span>
+          ))}
+        </div>
 
-      <div style={{
-        fontFamily: BODY, fontSize: 10.5, color: C.textFaint,
-        textAlign: "center", marginTop: 12, letterSpacing: "0.04em",
-      }}>
-        {done ? "completed" : "tap the ring as you recite"}
+        {showT && (
+          <div style={{
+            fontFamily: BODY, fontSize: 13, color: C.textSub,
+            textAlign: "center", lineHeight: 1.7, marginBottom: 8, letterSpacing: "0.005em",
+          }}>
+            {step.translit}
+          </div>
+        )}
+
+        <div style={{
+          fontFamily: isUr ? ARABIC_URDU : BODY,
+          fontSize: isUr ? 17 : 14, color: C.textMuted,
+          lineHeight: isUr ? 2.4 : 1.7, textAlign: "center",
+          direction: isUr ? "rtl" : "ltr", maxWidth: 480, margin: "0 auto",
+        }}>
+          {translateOf(step, lang)}
+        </div>
+
+        <div style={{
+          fontFamily: BODY, fontSize: 10.5, color: C.textFaint,
+          textAlign: "center", marginTop: 12, letterSpacing: "0.04em",
+        }}>
+          {done ? "completed" : "tap the ring as you recite"}
+        </div>
       </div>
     </div>
   );
@@ -1284,6 +1320,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
   const steps = routine.steps.map(resolveStep);
   const [counts, setCounts] = useState(steps.map(() => 0));
   const accent = routine.color;
+  const stepColors = steps.map((_, i) => stepColor(routine.color, i, steps.length));
 
   const tap = (i) => {
     setCounts(prev => {
@@ -1396,7 +1433,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
               step={s} idx={i}
               count={counts[i]} target={s.count}
               onTap={() => tap(i)}
-              accent={accent} lang={lang} showT={showT} script={script}
+              accent={stepColors[i]} lang={lang} showT={showT} script={script}
               isLast={i === steps.length - 1}
             />
           ))}
