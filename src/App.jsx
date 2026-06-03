@@ -1923,7 +1923,17 @@ export default function App() {
 
       <div style={{ position: "relative", padding: "26px 30px 60px" }}>
         {overlay ? (
-          <div style={{ marginBottom: 22 }}>
+          <div style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 5,
+            // Bleed past the content wrapper's 26px/30px padding so the bar
+            // spans the full width and pins flush to the top of the overlay.
+            margin: "-26px -30px 18px",
+            padding: "20px 30px 12px",
+            background: C.bg,
+            borderBottom: `1px solid ${C.line}`,
+          }}>
             <button
               onClick={clearSelection}
               style={{
@@ -1935,10 +1945,11 @@ export default function App() {
             >
               <span style={{ fontSize: 13 }}>←</span> Back to navigation
             </button>
-            {/* Section switcher. Lets the user jump to another section from
-                inside a dua on mobile, where the sidebar tabs are hidden behind
-                this overlay. pickLens clears the open item, so tapping a tab
-                also closes the overlay and lands on that section's overview. */}
+            {/* Section switcher, sticky so it stays reachable while scrolling a
+                long dua. The sidebar tabs are hidden behind this overlay on
+                mobile, so these stand in for them. pickLens clears the open
+                item, so tapping a tab also closes the overlay and lands on that
+                section's overview. */}
             <div style={{ display: "flex", gap: 6 }}>
               {LENSES.map(l => (
                 <LensTab
