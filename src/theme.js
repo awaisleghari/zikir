@@ -7,19 +7,19 @@ import { createTheme } from "@mantine/core";
 // Mantine scales are tuned to match. The app's inline `C` tokens and this theme
 // coexist while the redesign proceeds.
 //
-// Fonts match the existing stack so English, Arabic, and Urdu stay consistent
-// across old and new screens:
-//   - body / UI:   Source Serif 4
-//   - display:     Cormorant Garamond (headings)
-// Arabic and Urdu shaping is a font-and-direction matter, applied per element
-// where that text renders (App.jsx). It deliberately stays out of this theme.
+// Fonts match the dashboard's UI typeface so English text stays consistent
+// across old and new screens: Inter for body and headings (a clean,
+// professional sans, the same default Mantine and Ant Design lean on). The
+// elegant serif (Cormorant Garamond) is reserved in App.jsx for the brand
+// wordmark and editorial italics, not used here. Arabic and Urdu shaping is a
+// font-and-direction matter applied per element in App.jsx, not in this theme.
 
 export const theme = createTheme({
-  fontFamily: "'Source Serif 4', Georgia, serif",
+  fontFamily: "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   fontFamilyMonospace: "ui-monospace, SFMono-Regular, monospace",
   headings: {
-    fontFamily: "'Cormorant Garamond', Georgia, serif",
-    fontWeight: "500",
+    fontFamily: "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    fontWeight: "600",
   },
   defaultRadius: "md",
   primaryColor: "gold",

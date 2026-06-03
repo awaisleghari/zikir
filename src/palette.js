@@ -5,7 +5,7 @@
 // tokens, so flipping which block is active recolors the whole app.
 //
 // TO SWITCH WORLDS: comment out the active `C` block and uncomment the other.
-// Currently active: Celestial dark.  Alternate (commented): Emerald & gold.
+// Currently active: Emerald & gold.  Alternate (commented): Celestial dark.
 //
 // LENS_COLOR (the per-section accent colors) is shared by both worlds.
 
@@ -16,44 +16,44 @@ export const LENS_COLOR = {
   routines: "#7f5af0",  // violet
 };
 
-// ─── ACTIVE: Celestial dark ───────────────────────────────────────────────────
-// A deep near-black navy with warm ivory ink and the landing's pale gold as the
-// signature accent. Echoes the constellation landing.
+// ─── ACTIVE: Emerald & gold ───────────────────────────────────────────────────
+// A deep emerald night with warm ivory ink and gold as the signature accent.
 export const C = {
-  void:      "#04050a",  // deepest shadow
-  bg:        "#090b14",  // app canvas, near-black navy
-  panel:     "#11131e",  // sidebar / raised panel
-  surface:   "#1b1f30",  // cards, hover base
-  surfaceHi: "#262b40",  // stronger hover / active surface
-  text:      "#ece9e1",  // warm ivory ink
-  textSub:   "#bcc4dc",  // soft periwinkle
-  textMuted: "#888fb0",  // mid slate
-  textFaint: "#5d6280",  // faint slate
-  line:      "rgba(236,220,166,0.12)",  // gold hairline
-  lineHi:    "rgba(236,220,166,0.30)",  // gold hairline, stronger
-  gold:      "#ecdca6",  // signature gold (the landing's pale gold)
-  goldSoft:  "#f3e8c2",  // light gold, for text and glow
-  goldDeep:  "#c9b577",  // deep gold, for borders
+  void:      "#020805",  // deepest shadow, near-black green
+  bg:        "#0a1611",  // app canvas, deep emerald night
+  panel:     "#0e1d16",  // sidebar / raised panel
+  surface:   "#163026",  // cards, hover base
+  surfaceHi: "#1e3d30",  // stronger hover / active surface
+  text:      "#f2efe4",  // warm ivory ink
+  textSub:   "#bdcbb9",  // muted sage-ivory
+  textMuted: "#8ea395",  // mid sage
+  textFaint: "#647668",  // faint sage
+  line:      "rgba(217,184,92,0.12)",  // gold hairline
+  lineHi:    "rgba(217,184,92,0.32)",  // gold hairline, stronger
+  gold:      "#d9b85c",  // signature gold
+  goldSoft:  "#ead29a",  // light gold, for text and glow
+  goldDeep:  "#b8923f",  // deep gold, for borders
 };
 
-// ─── ALTERNATE: Emerald & gold ────────────────────────────────────────────────
-// A deep emerald night with warm ivory ink and gold. To use it, comment out the
-// Celestial dark `C` block above and uncomment this one.
+// ─── ALTERNATE: Celestial dark ────────────────────────────────────────────────
+// A deep near-black navy with warm ivory ink and the landing's pale gold as the
+// signature accent. To use it, comment out the Emerald & gold `C` block above
+// and uncomment this one.
 /*
 export const C = {
-  void:      "#020805",
-  bg:        "#0a1611",
-  panel:     "#0e1d16",
-  surface:   "#163026",
-  surfaceHi: "#1e3d30",
-  text:      "#f2efe4",
-  textSub:   "#bdcbb9",
-  textMuted: "#8ea395",
-  textFaint: "#647668",
-  line:      "rgba(217,184,92,0.12)",
-  lineHi:    "rgba(217,184,92,0.32)",
-  gold:      "#d9b85c",
-  goldSoft:  "#ead29a",
-  goldDeep:  "#b8923f",
+  void:      "#04050a",
+  bg:        "#090b14",
+  panel:     "#11131e",
+  surface:   "#1b1f30",
+  surfaceHi: "#262b40",
+  text:      "#ece9e1",
+  textSub:   "#bcc4dc",
+  textMuted: "#888fb0",
+  textFaint: "#5d6280",
+  line:      "rgba(236,220,166,0.12)",
+  lineHi:    "rgba(236,220,166,0.30)",
+  gold:      "#ecdca6",
+  goldSoft:  "#f3e8c2",
+  goldDeep:  "#c9b577",
 };
 */

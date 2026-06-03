@@ -10,7 +10,7 @@ import { C, LENS_COLOR } from "./palette.js";
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
 const STYLE = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Amiri:wght@400;700&family=Amiri+Quran&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=Amiri:wght@400;700&family=Amiri+Quran&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap');
 
   /* ─── Quran scripts ────────────────────────────────────────────────────────
      Loaded directly from Quran Foundation's CDN — the same source Quran.com
@@ -223,7 +223,7 @@ const STYLE = `
     -webkit-backdrop-filter: blur(14px) saturate(140%);
     backdrop-filter: blur(14px) saturate(140%);
     color: rgba(255,254,254,0.78);
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 12.5px;
     font-weight: 500;
     letter-spacing: 0.01em;
@@ -331,7 +331,7 @@ const STYLE = `
     border-top: 1px solid rgba(255,255,255,0.06);
     cursor: pointer;
     color: rgba(255,254,254,0.65);
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 10.5px;
     font-weight: 500;
     letter-spacing: 0.18em;
@@ -405,7 +405,7 @@ function rgba(hex, a) {
 // the whole palette is a one-file edit there.
 
 const SERIF  = "'Cormorant Garamond', Georgia, serif";
-const BODY   = "'Source Serif 4', Georgia, serif";
+const BODY   = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
 // Urdu translations render in true Nastaliq — the hanging-baseline cursive
 // script that Urdu is actually written in, not the Arabic Naskh forms that
@@ -644,7 +644,7 @@ function DuaListItem({ dua, selected, onClick }) {
       }}
     >
       <span style={{
-        fontFamily: SERIF, fontSize: 15,
+        fontFamily: BODY, fontSize: 15,
         color: selected ? C.text : C.textSub,
         fontWeight: 500, lineHeight: 1.25,
       }}>
@@ -695,7 +695,7 @@ function RoutineListItem({ routine, selected, onClick, script }) {
         </span>
       </div>
       <span style={{
-        fontFamily: SERIF, fontSize: 16, fontWeight: 500,
+        fontFamily: BODY, fontSize: 16, fontWeight: 500,
         color: selected ? C.text : C.textSub, lineHeight: 1.2,
       }}>
         {routine.title}
@@ -843,8 +843,8 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
       </div>
 
       <h2 style={{
-        margin: "0 0 22px", fontSize: 27, fontWeight: 500,
-        fontFamily: SERIF, color: C.text, lineHeight: 1.25,
+        margin: "0 0 22px", fontSize: 27, fontWeight: 600,
+        fontFamily: BODY, color: C.text, lineHeight: 1.25,
         letterSpacing: "-0.01em",
       }}>
         {dua.title}
@@ -1297,7 +1297,7 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
         </span>
         <div style={{ flex: 1 }}>
           <div style={{
-            fontFamily: SERIF, fontSize: 17, fontWeight: 500,
+            fontFamily: BODY, fontSize: 17, fontWeight: 600,
             color: C.text, lineHeight: 1.25,
           }}>
             {step.title}
@@ -1419,7 +1419,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
 
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 10 }}>
         <h2 style={{
-          margin: 0, fontSize: 27, fontWeight: 500, fontFamily: SERIF,
+          margin: 0, fontSize: 27, fontWeight: 600, fontFamily: BODY,
           color: C.text, lineHeight: 1.2, letterSpacing: "-0.01em",
         }}>
           {routine.title}
