@@ -867,7 +867,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
           controls row above is on. */}
       {showT && dua.translit && (
         <div style={{
-          fontSize: 15, color: accent,
+          fontSize: 15, color: readableInk(accent),
           fontFamily: BODY, lineHeight: 1.75,
           letterSpacing: "0.01em",
           marginBottom: 16,
@@ -1167,9 +1167,8 @@ function FontSizeSlider({ zoom, setZoom, accent, vertical = false }) {
   );
 }
 
-// Shift a hex color's hue by `deg` degrees, keeping its saturation and
-// lightness. Used to give each routine step its own hue within a coherent band.
-function shiftHue(hex, deg) {
+// ─── Color helpers (HSL) ─────────────────────────────────────────────────────
+function hexToHsl(hex) {
   let r = parseInt(hex.slice(1, 3), 16) / 255;
   let g = parseInt(hex.slice(3, 5), 16) / 255;
   let b = parseInt(hex.slice(5, 7), 16) / 255;
@@ -1184,7 +1183,10 @@ function shiftHue(hex, deg) {
     else h = (r - g) / d + 4;
     h /= 6;
   }
-  h = ((((h * 360 + deg) % 360) + 360) % 360) / 360;
+  return [h * 360, s, l];
+}
+function hslToHex(h, s, l) {
+  h = (((h % 360) + 360) % 360) / 360;
   const hue2rgb = (p, q, t) => {
     if (t < 0) t += 1; if (t > 1) t -= 1;
     if (t < 1 / 6) return p + (q - p) * 6 * t;
@@ -1192,17 +1194,32 @@ function shiftHue(hex, deg) {
     if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
     return p;
   };
-  let r2, g2, b2;
-  if (s === 0) { r2 = g2 = b2 = l; }
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
   else {
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
-    r2 = hue2rgb(p, q, h + 1 / 3);
-    g2 = hue2rgb(p, q, h);
-    b2 = hue2rgb(p, q, h - 1 / 3);
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
   }
   const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, "0");
-  return "#" + toHex(r2) + toHex(g2) + toHex(b2);
+  return "#" + toHex(r) + toHex(g) + toHex(b);
+}
+
+// Shift a hex color's hue by `deg` degrees, keeping saturation and lightness.
+// Used to give each routine step its own hue within a coherent band.
+function shiftHue(hex, deg) {
+  const [h, s, l] = hexToHsl(hex);
+  return hslToHex(h + deg, s, l);
+}
+
+// A readable-on-dark version of a per-step color, for using it as text. The hue
+// (the step's identity) is preserved, but lightness is floored so hues that
+// drift toward blue/violet stay legible against the dark slate reading canvas.
+function readableInk(hex) {
+  const [h, s, l] = hexToHsl(hex);
+  return hslToHex(h, Math.min(s, 0.7), Math.max(l, 0.72));
 }
 
 // Per-step color ramp: step 0 is the routine's own color; later steps step
@@ -1249,7 +1266,7 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
             roundCaps
             sections={[{ value: pct, color: accent }]}
             label={
-              <div style={{ textAlign: "center", color: done ? accent : C.text, fontFamily: BODY }}>
+              <div style={{ textAlign: "center", color: done ? readableInk(accent) : C.text, fontFamily: BODY }}>
                 {done ? (
                   <span style={{ fontSize: 18 }}>✓</span>
                 ) : (
@@ -1286,7 +1303,7 @@ function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, scr
           from the translation (the meaning) below it. Roman, not italic. */}
       {showT && (
         <div style={{
-          fontFamily: BODY, fontSize: 13, color: accent,
+          fontFamily: BODY, fontSize: 13, color: readableInk(accent),
           textAlign: "center", lineHeight: 1.7, marginBottom: 10, letterSpacing: "0.01em",
         }}>
           {step.translit}
