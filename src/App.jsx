@@ -875,7 +875,10 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         fontFamily: BODY, fontSize: 9.5, color: C.textFaint,
         letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 14,
       }}>
-        {CAT_LABEL[dua.category]}
+        {/* Category label when the dua has one; otherwise, for a prophet's dua,
+            its attribution — so a thematically-titled prophet dua still names
+            the prophet it came from. */}
+        {CAT_LABEL[dua.category] || (dua.prophet ? `Prophet ${PROPHET_LABEL[dua.prophet]}` : "")}
       </div>
 
       <h2 style={{

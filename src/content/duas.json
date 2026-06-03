@@ -298,7 +298,7 @@
     "id": "adam-1",
     "prophet": "adam",
     "use": "When you have wronged and turn back",
-    "title": "The Dua of Adam ؑ — Mercy After a Wrong",
+    "title": "A Dua of Repentance",
     "arabic": "رَبَّنَا ظَلَمْنَآ أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ ٱلْخَٰسِرِينَ",
     "translit": "Rabbanā ẓalamnā anfusanā wa in lam taghfir lanā wa tarḥamnā lanakūnanna minal-khāsirīn",
     "translations": {
@@ -310,5 +310,90 @@
     "story": "These are the words of Adam ؑ and his wife after they ate from the one tree they had been forbidden in the Garden (Quran 2:35, 20:120). What the Quran preserves is not the lapse but the turning back: rather than shift the blame, they took ownership and asked their Lord for forgiveness and mercy in these very words (Quran 7:23). Allah accepted their repentance, as He tells us, 'Then Adam received words from his Lord, and He accepted his repentance.' (Quran 2:37)",
     "whenToRecite": "After any wrong or shortcoming, when you want to own it and turn back to Allah rather than excuse it.",
     "benefit": "The words of Adam ؑ after the slip in the Garden (Quran 7:23). He took immediate ownership and asked for forgiveness and mercy, and Allah accepted his repentance (Quran 2:37)."
+  },
+  {
+    "id": "nuh-1",
+    "prophet": "nuh",
+    "use": "When you are overpowered and need help",
+    "title": "Asking Allah for Help",
+    "arabic": "أَنِّي مَغْلُوبٌ فَٱنتَصِرْ",
+    "translit": "Annī maghlūbun fantaṣir",
+    "translations": {
+      "en": "Indeed, I am overpowered, so help me.",
+      "ur": "بے شک میں مغلوب ہوں، پس تو مدد فرما۔"
+    },
+    "source": "Quran 54:10",
+    "context": "A plea stripped to its essence: an admission of being overwhelmed, and a single word handing the outcome to Allah. There is no argument and no plan, only the turn to the One who can answer.",
+    "story": "After calling his people for centuries against ridicule and threats, Nuh ؑ called upon his Lord with these words (Quran 54:9-10). Allah answered: 'So We opened the gates of heaven with rain pouring down.' (Quran 54:11)",
+    "whenToRecite": "When you have done what you can and are outmatched by the situation, so the help has to come from Allah.",
+    "benefit": "The cry of Nuh ؑ after centuries of rejection (Quran 54:10): an admission of being overpowered and a turn to Allah for help. Allah answered him."
+  },
+  {
+    "id": "nuh-2",
+    "prophet": "nuh",
+    "use": "For your parents and the believers",
+    "title": "Forgiveness for Parents and Believers",
+    "arabic": "رَبِّ ٱغْفِرْ لِي وَلِوَالِدَيَّ وَلِمَن دَخَلَ بَيْتِيَ مُؤْمِنًا وَلِلْمُؤْمِنِينَ وَٱلْمُؤْمِنَٰتِ وَلَا تَزِدِ ٱلظَّٰلِمِينَ إِلَّا تَبَارًا",
+    "translit": "Rabbi-ghfir lī wa li-wālidayya wa liman dakhala baytiya mu'minan wa lil-mu'minīna wal-mu'mināti wa lā tazidiẓ-ẓālimīna illā tabārā",
+    "translations": {
+      "en": "My Lord, forgive me and my parents and whoever enters my house as a believer, and the believing men and the believing women. And do not increase the wrongdoers except in ruin.",
+      "ur": "اے میرے رب! مجھے بخش دے، اور میرے ماں باپ کو، اور ہر اس شخص کو جو ایمان کے ساتھ میرے گھر میں داخل ہو، اور تمام مومن مردوں اور مومن عورتوں کو۔ اور ظالموں کو ہلاکت کے سوا کسی چیز میں زیادہ نہ کر۔"
+    },
+    "source": "Quran 71:28",
+    "context": "A dua that widens outward: from oneself, to one's parents, to everyone who enters the house in faith, to all believing men and women across time. The closing line against the wrongdoers came only at the end of a long life of calling them to Allah, not in place of it.",
+    "story": "At the close of Surah Nuh, the Quran records this as the supplication Nuh ؑ made for his parents and the believers (Quran 71:28). Classical commentators read 'my house' as either his place of worship or the ark itself, so the prayer reaches everyone who trusted the call.",
+    "whenToRecite": "When remembering your parents and the believers in your dua, those living and those who have passed.",
+    "benefit": "The dua at the end of Surah Nuh (71:28): forgiveness for oneself, one's parents, and all believing men and women."
+  },
+  {
+    "id": "nuh-3",
+    "prophet": "nuh",
+    "use": "When others deny or dismiss you",
+    "title": "Asking for Support When Denied",
+    "arabic": "رَبِّ ٱنصُرْنِي بِمَا كَذَّبُونِ",
+    "translit": "Rabbi-nṣurnī bimā kadhdhabūn",
+    "translations": {
+      "en": "My Lord, support me because they have denied me.",
+      "ur": "اے میرے رب! تو میری مدد فرما، کیونکہ انہوں نے مجھے جھٹلایا ہے۔"
+    },
+    "source": "Quran 23:26",
+    "context": "Not a prayer against the deniers, but a request to be carried through their denial. It hands the weight of being disbelieved back to Allah and asks only for His support.",
+    "story": "Nuh ؑ made this dua while building the ark, mocked by his people for building a ship far from any sea (Quran 23:26-27). The verses that follow record Allah's instruction to build it 'under Our eyes,' and the rescue that came after.",
+    "whenToRecite": "When you are doubted or dismissed for doing what you know to be right.",
+    "benefit": "The dua of Nuh ؑ while building the ark amid mockery (Quran 23:26): a request to be supported through others' denial."
+  },
+  {
+    "id": "nuh-4",
+    "prophet": "nuh",
+    "use": "When you set out on a journey",
+    "title": "A Dua for Travelling",
+    "arabic": "رَبِّ أَنزِلْنِي مُنزَلًا مُبَارَكًا وَأَنتَ خَيْرُ ٱلْمُنزِلِينَ",
+    "translit": "Rabbi anzilnī munzalan mubārakan wa anta khayrul-munzilīn",
+    "translations": {
+      "en": "My Lord, let me come to land at a blessed place, for You are the best to bring [me] to rest.",
+      "ur": "اے میرے رب! مجھے بابرکت جگہ پر اتار، اور تو سب سے بہتر اتارنے والا ہے۔"
+    },
+    "source": "Quran 23:29",
+    "context": "A dua for arrival: it asks not only to reach the destination but to be brought down into a place of blessing, naming Allah as the best of those who give a resting place.",
+    "story": "The Quran gives these words to Nuh ؑ in connection with the ark (Quran 23:29). The commentators differ on whether he said them on boarding or on coming to land, so it is recited at the start of a journey, at its end, or both.",
+    "whenToRecite": "When setting out on a journey by any means, or on reaching your destination.",
+    "benefit": "The dua of Nuh ؑ tied to the ark (Quran 23:29): to be brought to land in a place of blessing. Recited when travelling, on departure or arrival."
+  },
+  {
+    "id": "nuh-5",
+    "prophet": "nuh",
+    "use": "When you have overstepped and seek mercy",
+    "title": "Seeking Refuge and Mercy",
+    "arabic": "رَبِّ إِنِّي أَعُوذُ بِكَ أَنْ أَسْأَلَكَ مَا لَيْسَ لِي بِهِ عِلْمٌ وَإِلَّا تَغْفِرْ لِي وَتَرْحَمْنِي أَكُن مِنَ ٱلْخَٰسِرِينَ",
+    "translit": "Rabbi innī aʿūdhu bika an asʾalaka mā laysa lī bihī ʿilmun wa illā taghfir lī wa tarḥamnī akun minal-khāsirīn",
+    "translations": {
+      "en": "My Lord, I seek refuge in You from asking You for that of which I have no knowledge. And unless You forgive me and have mercy upon me, I will be among the losers.",
+      "ur": "اے میرے رب! میں تیری پناہ مانگتا ہوں کہ تجھ سے وہ مانگوں جس کا مجھے علم نہیں۔ اور اگر تو نے مجھے نہ بخشا اور مجھ پر رحم نہ کیا تو میں نقصان اٹھانے والوں میں سے ہو جاؤں گا۔"
+    },
+    "source": "Quran 11:47",
+    "context": "A dua of restraint before Allah: it withdraws a question that should not have been asked and seeks refuge in Him from overstepping, then rests on His forgiveness and mercy. Its closing words echo the dua of Adam ؑ.",
+    "story": "When the flood came, Nuh ؑ asked Allah about his drowned son, and was answered, 'He is not of your family; his work was other than righteous, so ask Me not for that of which you have no knowledge.' (Quran 11:45-46) Nuh ؑ replied with this prayer (Quran 11:47), turning the correction into repentance.",
+    "whenToRecite": "When you realize you have asked for or assumed something beyond what was yours to, and you turn back to Allah.",
+    "benefit": "The dua of Nuh ؑ after questioning Allah about his son (Quran 11:47): seeking refuge from overstepping, and resting on Allah's forgiveness and mercy."
   }
 ]
