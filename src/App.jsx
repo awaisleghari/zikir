@@ -6,6 +6,7 @@ import ROUTINES_RAW   from "./content/routines.json";
 import TAXONOMY       from "./content/taxonomy.json";
 import SectionOverview from "./SectionOverview.jsx";
 import { C, LENS_COLOR } from "./palette.js";
+import { SegmentedControl, Switch } from "@mantine/core";
 
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
@@ -944,38 +945,26 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
           title={speaking ? "Stop" : "Play Arabic"}
         />
 
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <GlassSegmented
-            value={script}
-            onChange={setScript}
-            accent={accent}
-            options={SCRIPT_OPTIONS}
-          />
-          <GlassSegmented
-            value={lang}
-            onChange={setLang}
-            accent={accent}
-            options={LANG_OPTIONS}
-          />
+        <TranslitSwitch checked={showT} onChange={setShowT} />
+
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <ScriptToggle value={script} onChange={setScript} />
+          <LangToggle value={lang} onChange={setLang} />
         </div>
       </div>
 
-      {/* Transliteration — collapsible. The Disclosure header acts as both
-          the label and the toggle, so the user can always see that this
-          content exists, even when collapsed. */}
-      <Disclosure
-        label="Transliteration"
-        open={showT}
-        onToggle={() => setShowT(!showT)}
-      >
+      {/* Transliteration — shown when the Transliteration switch in the
+          controls row above is on. */}
+      {showT && dua.translit && (
         <div style={{
           fontSize: 15, color: C.textSub,
           fontFamily: BODY, lineHeight: 1.75,
           letterSpacing: "0.005em",
+          marginBottom: 16,
         }}>
           {dua.translit}
         </div>
-      </Disclosure>
+      )}
 
       {/* Translation — roman, near-white, regular weight. The translation is
           the meaning; it earns full readability. Italic stays reserved for
@@ -1063,6 +1052,45 @@ const GlassSegmented = React.memo(function GlassSegmented({ value, onChange, opt
     </div>
   );
 });
+
+// ─── Mantine control toggles ─────────────────────────────────────────────────
+// SegmentedControl + Switch replacements for the script, language, and
+// transliteration controls (the GlassSegmented above is superseded by these).
+// The zoom slider stays hand-rolled (FontSizeSlider): its uncontrolled-input
+// performance design must not become a controlled Mantine Slider.
+const SCRIPT_DATA = [
+  { label: "Uthmani", value: "uthmani" },
+  { label: "IndoPak", value: "indopak" },
+];
+const LANG_DATA = [
+  { label: "EN", value: "en" },
+  { label: <span style={{ fontFamily: ARABIC_URDU, fontSize: "1.05em", lineHeight: 1 }}>اردو</span>, value: "ur" },
+];
+const SEG_STYLES = {
+  root: { background: "rgba(255,255,255,0.035)", border: `1px solid ${rgba(C.gold, 0.2)}` },
+  label: { fontFamily: BODY, fontWeight: 500, fontSize: 12.5 },
+};
+
+function ScriptToggle({ value, onChange }) {
+  return (
+    <SegmentedControl size="sm" radius="xl" color="gold"
+      value={value} onChange={onChange} data={SCRIPT_DATA} styles={SEG_STYLES} />
+  );
+}
+function LangToggle({ value, onChange }) {
+  return (
+    <SegmentedControl size="sm" radius="xl" color="gold"
+      value={value} onChange={onChange} data={LANG_DATA} styles={SEG_STYLES} />
+  );
+}
+function TranslitSwitch({ checked, onChange }) {
+  return (
+    <Switch size="sm" color="gold" checked={checked}
+      onChange={(e) => onChange(e.currentTarget.checked)}
+      label="Transliteration"
+      styles={{ label: { color: C.textSub, fontFamily: BODY, fontSize: 12.5 } }} />
+  );
+}
 
 // Circular 36×36 icon button. Pass `icon` as an SVG path (the d= string of a
 // single <path>) — kept tiny and inline so we don't need an icon library.
@@ -1477,31 +1505,11 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
         flexWrap: "wrap",
         rowGap: 10,
       }}>
-        <button
-          type="button"
-          onClick={() => setShowT(!showT)}
-          className={`zk-glass ${showT ? "is-active" : ""}`}
-          style={{
-            "--zk-accent": accent,
-            "--zk-glass-tint": rgba(accent, 0.10),
-          }}
-        >
-          {showT ? "Hide" : "Show"} transliteration
-        </button>
+        <TranslitSwitch checked={showT} onChange={setShowT} />
 
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <GlassSegmented
-            value={script}
-            onChange={setScript}
-            accent={accent}
-            options={SCRIPT_OPTIONS}
-          />
-          <GlassSegmented
-            value={lang}
-            onChange={setLang}
-            accent={accent}
-            options={LANG_OPTIONS}
-          />
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <ScriptToggle value={script} onChange={setScript} />
+          <LangToggle value={lang} onChange={setLang} />
         </div>
       </div>
 
