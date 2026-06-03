@@ -713,7 +713,7 @@ function RoutineListItem({ routine, selected, onClick, script }) {
 
 const Sidebar = React.memo(function Sidebar({
   lens, setLens, groups, openGroup, setOpenGroup,
-  selected, onSelectDua, onSelectRoutine, isNarrow, script,
+  selected, onSelectDua, onSelectRoutine, isNarrow, script, hidden,
 }) {
   return (
     <div style={{
@@ -722,7 +722,11 @@ const Sidebar = React.memo(function Sidebar({
       background: C.panel,
       borderRight: isNarrow ? "none" : `1px solid ${C.line}`,
       height: isNarrow ? "auto" : "100vh",
-      display: "flex", flexDirection: "column",
+      // Hidden on mobile while a dua is open: the fixed reading overlay covers
+      // the screen, and leaving the scrollable sidebar mounted behind it caused
+      // iOS Safari to bleed it through near the toolbar during scroll. Kept
+      // mounted (display:none, not unmounted) so its state survives.
+      display: hidden ? "none" : "flex", flexDirection: "column",
     }}>
       {/* Brand */}
       <div style={{ padding: "22px 20px 16px", borderBottom: `1px solid ${C.line}` }}>
@@ -1993,6 +1997,7 @@ export default function App() {
         onSelectRoutine={selectRoutine}
         isNarrow={isNarrow}
         script={script}
+        hidden={isNarrow && !!selected}
       />
       {!isNarrow && detailPane(false)}
       {isNarrow && selected && detailPane(true)}
