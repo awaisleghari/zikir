@@ -6,7 +6,7 @@ import ROUTINES_RAW   from "./content/routines.json";
 import TAXONOMY       from "./content/taxonomy.json";
 import SectionOverview from "./SectionOverview.jsx";
 import { C, LENS_COLOR } from "./palette.js";
-import { SegmentedControl, Switch } from "@mantine/core";
+import { SegmentedControl, Switch, ActionIcon } from "@mantine/core";
 
 // ─── Style injection (fonts + animations + scrollbars) ───────────────────────
 
@@ -939,14 +939,10 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         flexWrap: "wrap",
         rowGap: 10,
       }}>
-        <GlassIconButton
-          variant="play"
+        <PlayButton
+          playing={speaking}
           onClick={() => (speaking ? stop() : speak(dua.arabic))}
           disabled={!ttsOk}
-          active={speaking}
-          accent={accent}
-          icon={speaking ? ICONS.stop : ICONS.play}
-          title={speaking ? "Stop" : "Play Arabic"}
         />
 
         <TranslitSwitch checked={showT} onChange={setShowT} />
@@ -1027,41 +1023,11 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
 // One button language used across the controls row. Build other controls on
 // top of these two — never reach for ad-hoc inline-styled buttons.
 
-// A 2-way segmented pill. Used for script (Uthmani / IndoPak) and language
-// (EN / اردو). Pass `options` as [{ id, label, font? }, ...].
-const GlassSegmented = React.memo(function GlassSegmented({ value, onChange, options, accent }) {
-  return (
-    <div
-      className="zk-seg"
-      style={{
-        "--zk-accent": accent,
-        "--zk-glass-tint": rgba(accent, 0.10),
-      }}
-    >
-      {options.map((opt) => {
-        const active = opt.id === value;
-        return (
-          <button
-            key={opt.id}
-            type="button"
-            onClick={() => onChange(opt.id)}
-            className={`zk-glass ${active ? "is-active" : ""}`}
-            title={opt.title}
-            style={opt.font ? { fontFamily: opt.font } : undefined}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-});
-
 // ─── Mantine control toggles ─────────────────────────────────────────────────
-// SegmentedControl + Switch replacements for the script, language, and
-// transliteration controls (the GlassSegmented above is superseded by these).
-// The zoom slider stays hand-rolled (FontSizeSlider): its uncontrolled-input
-// performance design must not become a controlled Mantine Slider.
+// SegmentedControl + Switch for the script, language, and transliteration
+// controls. The zoom slider stays hand-rolled (FontSizeSlider): its
+// uncontrolled-input performance design must not become a controlled Mantine
+// Slider.
 const SCRIPT_DATA = [
   { label: "Uthmani", value: "uthmani" },
   { label: "IndoPak", value: "indopak" },
@@ -1096,80 +1062,34 @@ function TranslitSwitch({ checked, onChange }) {
   );
 }
 
-// Circular 36×36 icon button. Pass `icon` as an SVG path (the d= string of a
-// single <path>) — kept tiny and inline so we don't need an icon library.
-const GlassIconButton = React.memo(function GlassIconButton({ onClick, disabled, active, accent, icon, title, variant }) {
+// Play / stop the Arabic (Web Speech). Mantine ActionIcon so the controls row
+// is one visual language: gold tint when idle, gold fill while playing.
+function PlayButton({ playing, onClick, disabled }) {
   return (
-    <button
-      type="button"
+    <ActionIcon
+      size={36} radius="xl"
+      variant={playing ? "filled" : "light"}
+      color="gold"
       onClick={onClick}
       disabled={disabled}
-      title={title}
-      aria-label={title}
-      className={`zk-glass zk-icon ${variant === "play" ? "zk-play" : ""} ${active ? (variant === "play" ? "is-playing" : "is-active") : ""}`}
-      style={{
-        "--zk-accent": accent,
-        "--zk-accent-bright": accent,
-        "--zk-accent-glow": rgba(accent, 0.45),
-        "--zk-glass-tint": rgba(accent, 0.12),
-      }}
+      aria-label={playing ? "Stop" : "Play Arabic"}
+      title={playing ? "Stop" : "Play Arabic"}
     >
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path d={icon} />
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+        <path d={playing ? ICONS.stop : ICONS.play} fill="currentColor" />
       </svg>
-    </button>
+    </ActionIcon>
   );
-});
+}
 
-// Icon path strings — kept here so the components stay clean.
-// Disclosure (collapsible section). Pure presentational — the parent owns
-// the open state. The expand/collapse is CSS-driven (grid-rows 0fr → 1fr)
-// for smooth animation without measuring content height.
-const Disclosure = React.memo(function Disclosure({ label, open, onToggle, children }) {
-  return (
-    <div style={{ marginBottom: 6 }}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`zk-disclosure-header ${open ? "is-open" : ""}`}
-        aria-expanded={open}
-      >
-        {label}
-        <svg className="zk-chev" viewBox="0 0 16 16" aria-hidden="true">
-          <path d={ICONS.chevron} />
-        </svg>
-      </button>
-      <div className={`zk-disclosure-body ${open ? "is-open" : ""}`}>
-        <div className="zk-disclosure-inner">
-          <div className="zk-disclosure-content">
-            {children}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
+// Icon path strings — kept inline so we don't need an icon library.
 const ICONS = {
   // Equilateral triangle pointing right, optically centered (left edge at x=5
   // so the visual weight sits where the eye expects "play" to be).
   play: "M5 3.5 L12 8 L5 12.5 Z",
   // Two vertical bars — pause/stop.
   stop: "M4.5 3.5 H7 V12.5 H4.5 Z M9 3.5 H11.5 V12.5 H9 Z",
-  // Down-pointing chevron. Rotated via CSS transform when expanded.
-  chevron: "M3.5 6 L8 10.5 L12.5 6",
 };
-
-// Stable option arrays for the script and language segmented pills. Defined
-// at module level so their identity is the same across all renders — which
-// is what makes React.memo on GlassSegmented actually skip re-render work.
-const SCRIPT_OPTIONS = Object.values(SCRIPTS).map(s => ({
-  id: s.id, label: s.label, title: s.sublabel,
-}));
-const LANG_OPTIONS = [
-  { id: "en", label: "EN" },
-  { id: "ur", label: "اردو", font: ARABIC_URDU },
-];
 
 // Font-size slider. Range 75–175 (% of baseline Arabic size). Two layouts:
 //   • vertical (`vertical: true`)   — desktop rail, parent positions it
