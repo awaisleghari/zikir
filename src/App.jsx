@@ -920,7 +920,7 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
         {detailSections.map((s) => (
           <div key={s.label}>
             <Text style={{
-              fontSize: 10, color: C.textFaint, textTransform: "uppercase",
+              fontSize: 10, color: readableInk(accent), textTransform: "uppercase",
               letterSpacing: "0.18em", marginBottom: 6, fontFamily: BODY,
             }}>
               {s.label}
