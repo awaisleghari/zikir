@@ -867,9 +867,9 @@ function DuaDetail({ dua, lang, setLang, speaking, speak, stop, showT, setShowT,
           controls row above is on. */}
       {showT && dua.translit && (
         <div style={{
-          fontSize: 15, color: C.textSub,
+          fontSize: 15, color: accent,
           fontFamily: BODY, lineHeight: 1.75,
-          letterSpacing: "0.005em",
+          letterSpacing: "0.01em",
           marginBottom: 16,
         }}>
           {dua.translit}
@@ -1212,45 +1212,24 @@ function shiftHue(hex, deg) {
 const STEP_HUE_SPREAD = 100;
 const stepColor = (base, i, n) => shiftHue(base, (n > 1 ? i / (n - 1) : 0) * STEP_HUE_SPREAD);
 
-function RoutineStep({ step, idx, count, target, onTap, accent, prevColor, prevDone, lang, showT, script, isLast }) {
+function RoutineStep({ step, idx, count, target, onTap, accent, lang, showT, script, isLast }) {
   const done = count >= target;
   const isUr = lang === "ur";
   const pct = Math.min(100, (count / target) * 100);
-  const faint = rgba(C.textSub, 0.18);
-  // The dashed spine + numbered station are an absolute overlay in the far-left
-  // margin: they reserve no horizontal space, so the centered Arabic, translit,
-  // and translation stay page-centered. Only the title row is indented to clear
-  // the station.
-  const SPINE = 9;             // x-center of the dashed spine
-  const STATION = 22;          // station dot diameter
-  const TOP = 28;              // top padding; title row + station begin here
-  const stationCY = TOP + 11;  // station vertical center, level with the title
   return (
-    <div style={{ position: "relative", padding: `${TOP}px 2px ${isLast ? 10 : 28}px`, opacity: done ? 0.82 : 1, transition: "opacity 0.3s ease" }}>
-      {/* Dashed spine above the station (continues the line from the step above) */}
-      {idx !== 0 && (
-        <div style={{ position: "absolute", left: SPINE - 1, top: 0, height: stationCY - STATION / 2,
-          borderLeft: `2px dashed ${prevDone ? prevColor : faint}` }} />
-      )}
-      {/* Dashed spine below the station (carries the line to the next step) */}
-      {!isLast && (
-        <div style={{ position: "absolute", left: SPINE - 1, top: stationCY + STATION / 2, bottom: 0,
-          borderLeft: `2px dashed ${done ? accent : faint}` }} />
-      )}
-      {/* Station: the step number, in this step's color, filled once complete */}
-      <div style={{
-        position: "absolute", left: SPINE - STATION / 2, top: stationCY - STATION / 2,
-        width: STATION, height: STATION, borderRadius: "50%",
-        background: done ? accent : rgba(accent, 0.16), border: `1.5px solid ${accent}`,
-        color: done ? C.void : accent, display: "flex", alignItems: "center", justifyContent: "center",
-        fontFamily: BODY, fontSize: 10, fontWeight: 700, zIndex: 1,
-        transition: "background 0.3s ease, color 0.3s ease",
-      }}>
-        {idx + 1}
-      </div>
-
-      {/* Title + counter, indented to clear the station */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, paddingLeft: 28 }}>
+    <div style={{
+      padding: "26px 2px 30px",
+      borderBottom: isLast ? "none" : `1px solid ${rgba(C.textSub, 0.08)}`,
+      opacity: done ? 0.82 : 1, transition: "opacity 0.3s ease",
+    }}>
+      {/* Title row: step number, title/source, and the count ring */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 18 }}>
+        <span style={{
+          fontFamily: BODY, fontSize: 11, color: C.textFaint,
+          letterSpacing: "0.1em", marginTop: 4, flexShrink: 0,
+        }}>
+          {String(idx + 1).padStart(2, "0")}
+        </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: BODY, fontSize: 17, fontWeight: 600, color: C.text, lineHeight: 1.25 }}>
             {step.title}
@@ -1293,7 +1272,7 @@ function RoutineStep({ step, idx, count, target, onTap, accent, prevColor, prevD
         fontSize: `calc(${1.6 * arabicScale(script)}rem * var(--zk-arabic-scale, 1))`,
         lineHeight: script === "indopak" ? 2.4 : 2.2,
         direction: "rtl", textAlign: "center", color: C.text,
-        margin: showT ? "20px 0 10px" : "20px 0 8px",
+        margin: showT ? "20px 0 12px" : "20px 0 10px",
         fontFeatureSettings: "'liga' 1, 'calt' 1",
       }}>
         {step.arabic.split(/\s+/).filter(Boolean).map((word, i) => (
@@ -1303,19 +1282,22 @@ function RoutineStep({ step, idx, count, target, onTap, accent, prevColor, prevD
         ))}
       </div>
 
+      {/* Transliteration — in the step's accent color, so it reads clearly apart
+          from the translation (the meaning) below it. Roman, not italic. */}
       {showT && (
         <div style={{
-          fontFamily: BODY, fontSize: 13, color: C.textSub,
-          textAlign: "center", lineHeight: 1.7, marginBottom: 8, letterSpacing: "0.005em",
+          fontFamily: BODY, fontSize: 13, color: accent,
+          textAlign: "center", lineHeight: 1.7, marginBottom: 10, letterSpacing: "0.01em",
         }}>
           {step.translit}
         </div>
       )}
 
+      {/* Translation — the meaning; brighter for prominence and contrast. */}
       <div style={{
         fontFamily: isUr ? ARABIC_URDU : BODY,
-        fontSize: isUr ? 17 : 14, color: C.textMuted,
-        lineHeight: isUr ? 2.4 : 1.7, textAlign: "center",
+        fontSize: isUr ? 17 : 14.5, color: C.textSub,
+        lineHeight: isUr ? 2.4 : 1.75, textAlign: "center",
         direction: isUr ? "rtl" : "ltr", maxWidth: 480, margin: "0 auto",
       }}>
         {translateOf(step, lang)}
@@ -1448,10 +1430,7 @@ function RoutineDetail({ routine, lang, setLang, showT, setShowT, script, setScr
               step={s} idx={i}
               count={counts[i]} target={s.count}
               onTap={() => tap(i)}
-              accent={stepColors[i]}
-              prevColor={i > 0 ? stepColors[i - 1] : undefined}
-              prevDone={i > 0 && counts[i - 1] >= steps[i - 1].count}
-              lang={lang} showT={showT} script={script}
+              accent={stepColors[i]} lang={lang} showT={showT} script={script}
               isLast={i === steps.length - 1}
             />
           ))}
