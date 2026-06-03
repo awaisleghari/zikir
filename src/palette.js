@@ -7,6 +7,10 @@
 // TO SWITCH WORLDS: comment out the active `C` block and uncomment the other.
 // Currently active: Emerald & gold.  Alternate (commented): Celestial dark.
 //
+// Two-tone layout: the dashboard (sidebar) uses `panel`; the non-dashboard
+// reading area (detail pane) uses `canvas`, a complementary tone in the same
+// near-black register so the zones read as distinct without harsh contrast.
+//
 // LENS_COLOR (the per-section accent colors) is shared by both worlds.
 
 export const LENS_COLOR = {
@@ -18,9 +22,11 @@ export const LENS_COLOR = {
 
 // ─── ACTIVE: Emerald & gold ───────────────────────────────────────────────────
 // A deep emerald night with warm ivory ink and gold as the signature accent.
+// The reading area (canvas) shifts off green to a deep cool slate.
 export const C = {
   void:      "#020805",  // deepest shadow, near-black green
-  bg:        "#0a1611",  // app canvas, deep emerald night
+  bg:        "#0a1611",  // dashboard base, deep emerald night
+  canvas:    "#0b131c",  // non-dashboard reading area, complementary cool slate
   panel:     "#0e1d16",  // sidebar / raised panel
   surface:   "#163026",  // cards, hover base
   surfaceHi: "#1e3d30",  // stronger hover / active surface
@@ -37,12 +43,13 @@ export const C = {
 
 // ─── ALTERNATE: Celestial dark ────────────────────────────────────────────────
 // A deep near-black navy with warm ivory ink and the landing's pale gold as the
-// signature accent. To use it, comment out the Emerald & gold `C` block above
-// and uncomment this one.
+// signature accent. The reading area (canvas) shifts to a warm dark. To use it,
+// comment out the Emerald & gold `C` block above and uncomment this one.
 /*
 export const C = {
   void:      "#04050a",
   bg:        "#090b14",
+  canvas:    "#13110b",
   panel:     "#11131e",
   surface:   "#1b1f30",
   surfaceHi: "#262b40",

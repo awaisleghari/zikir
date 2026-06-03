@@ -1880,7 +1880,7 @@ export default function App() {
       className="thinscroll"
       style={{
         flex: 1,
-        background: C.bg,
+        background: C.canvas,
         height: "100vh",
         overflowY: "auto",
         position: overlay ? "fixed" : "relative",
@@ -1913,7 +1913,7 @@ export default function App() {
             // spans the full width and pins flush to the top of the overlay.
             margin: "-26px -30px 18px",
             padding: "20px 30px 12px",
-            background: C.bg,
+            background: C.canvas,
             borderBottom: `1px solid ${C.line}`,
           }}>
             <button
