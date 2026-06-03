@@ -28,6 +28,21 @@
     { "id": "ibnsunni",  "label": "Ibn al-Sunni",      "match": "Ibn al-Sunni", "color": "#b8c1ec" }
   ],
 
+  "prophets": [
+    { "id": "adam",     "name": "Adam",     "honorific": "ؑ", "color": "#e0a458" },
+    { "id": "nuh",      "name": "Nuh",      "honorific": "ؑ", "color": "#4bb8c4" },
+    { "id": "shuaib",   "name": "Shuaib",   "honorific": "ؑ", "color": "#8f7ff0" },
+    { "id": "ibrahim",  "name": "Ibrahim",  "honorific": "ؑ", "color": "#2cb67d" },
+    { "id": "yaqub",    "name": "Yaqub",    "honorific": "ؑ", "color": "#d98fae" },
+    { "id": "yusuf",    "name": "Yusuf",    "honorific": "ؑ", "color": "#f0b94e" },
+    { "id": "ayyub",    "name": "Ayyub",    "honorific": "ؑ", "color": "#6c8cff" },
+    { "id": "musa",     "name": "Musa",     "honorific": "ؑ", "color": "#7f5af0" },
+    { "id": "suleiman", "name": "Suleiman", "honorific": "ؑ", "color": "#38c0b0" },
+    { "id": "yunus",    "name": "Yunus",    "honorific": "ؑ", "color": "#5b8def" },
+    { "id": "zakariya", "name": "Zakariya", "honorific": "ؑ", "color": "#c79be8" },
+    { "id": "muhammad", "name": "Muhammad", "honorific": "ﷺ", "color": "#f3c969" }
+  ],
+
   "categories": {
     "morning":   "Morning & Evening",
     "provision": "Provision & Work",

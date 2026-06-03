@@ -446,11 +446,15 @@ const arabicScale = (script) => (script === "indopak" ? 1.18 : 1);
 const MOODS      = TAXONOMY.moods;
 const TIMINGS    = TAXONOMY.timings;
 const SOURCES    = TAXONOMY.sources;
+const PROPHETS   = TAXONOMY.prophets || [];
 const CAT_LABEL  = TAXONOMY.categories;
 
 const MOOD_COLOR   = Object.fromEntries(MOODS.map(m => [m.id, m.color]));
 const TIMING_COLOR = Object.fromEntries(TIMINGS.map(t => [t.id, t.color]));
 const SOURCE_COLOR = Object.fromEntries(SOURCES.map(s => [s.id, s.color]));
+// A prophet's display name carries the appropriate honorific (ؑ for the
+// prophets, ﷺ reserved for the Prophet Muhammad).
+const PROPHET_LABEL = Object.fromEntries(PROPHETS.map(p => [p.id, `${p.name} ${p.honorific}`]));
 
 const LENSES = [
   { id: "moods",    label: "Moods",    glyph: "♡" },
@@ -483,6 +487,7 @@ const duaColor = (d) => MOOD_COLOR[d.moods?.[0]] || C.textSub;
   const moodSet    = new Set(MOODS.map(m => m.id));
   const timingSet  = new Set(TIMINGS.map(t => t.id));
   const catSet     = new Set(Object.keys(CAT_LABEL));
+  const prophetSet = new Set(PROPHETS.map(p => p.id));
   const issues     = [];
 
   DUAS.forEach(d => {
@@ -491,6 +496,7 @@ const duaColor = (d) => MOOD_COLOR[d.moods?.[0]] || C.textSub;
     (d.moods || []).forEach(m => { if (!moodSet.has(m)) issues.push(`Dua "${d.id}" has unknown mood "${m}"`); });
     (d.timings || []).forEach(t => { if (!timingSet.has(t)) issues.push(`Dua "${d.id}" has unknown timing "${t}"`); });
     if (d.category && !catSet.has(d.category)) issues.push(`Dua "${d.id}" has unknown category "${d.category}"`);
+    if (d.prophet && !prophetSet.has(d.prophet)) issues.push(`Dua "${d.id}" has unknown prophet "${d.prophet}"`);
   });
 
   ROUTINES.forEach(r => {
@@ -529,14 +535,48 @@ function groupsForLens(lens) {
       duas: DUAS.filter(d => (d.timings || []).includes(t.id)),
     })).filter(g => g.duas.length);
   }
-  if (lens === "sources") {
-    return SOURCES.map(s => ({
-      id: s.id, label: s.label, color: s.color,
-      duas: DUAS.filter(d => d.collections.includes(s.id)),
-    })).filter(g => g.duas.length);
-  }
+  // The Library ("sources") lens does not use this flat builder — it nests one
+  // level deeper and is built by librarySections() below.
   return [];
 }
+
+// The Library lens nests one level deeper than the others: two subcategories,
+// "Sources" (the collection a dua was preserved in) and "Dua of the Prophets"
+// (grouped by the prophet who made it). Each subcategory holds leaf groups, and
+// each leaf holds duas. Leaf ids are namespaced ("src:" / "prophet:") so they
+// never collide and so the open-state can tell which subcategory a leaf sits in.
+const LIBRARY_SECTION_LABEL = { sources: "Sources", prophets: "Dua of the Prophets" };
+
+function librarySections() {
+  return [
+    {
+      id: "sources",
+      label: LIBRARY_SECTION_LABEL.sources,
+      groups: SOURCES.map(s => ({
+        id: `src:${s.id}`, label: s.label, color: s.color,
+        duas: DUAS.filter(d => d.collections.includes(s.id)),
+      })).filter(g => g.duas.length),
+    },
+    {
+      id: "prophets",
+      label: LIBRARY_SECTION_LABEL.prophets,
+      groups: PROPHETS.map(p => ({
+        id: `prophet:${p.id}`, label: PROPHET_LABEL[p.id], color: p.color,
+        duas: DUAS.filter(d => d.prophet === p.id),
+      })).filter(g => g.duas.length),
+    },
+  ].filter(sec => sec.groups.length);
+}
+
+// Flat list of every Library leaf-group id — used to validate an open group
+// restored from localStorage on refresh.
+const libraryLeafIds = () => librarySections().flatMap(s => s.groups.map(g => g.id));
+// Which Library subcategory a namespaced leaf id belongs to ("src:quran" →
+// "sources", "prophet:adam" → "prophets").
+const librarySectionOf = (leafId) =>
+  typeof leafId === "string" && leafId.includes(":")
+    ? (leafId.split(":")[0] === "prophet" ? "prophets" : "sources")
+    : null;
 
 // Translation helper — gracefully falls back to English if a translation is missing.
 const translateOf = (entry, lang) =>
@@ -568,6 +608,40 @@ function GroupHeader({ group, open, onClick }) {
       styles={{
         root: { borderRadius: 10 },
         label: { fontFamily: BODY, fontSize: 13.5, fontWeight: open ? 600 : 500 },
+      }}
+    />
+  );
+}
+
+// The Library lens's top level: a collapsible subcategory ("Sources" or "Dua of
+// the Prophets") that contains the GroupHeader leaves. Styled as a small
+// uppercase section header so the two-level hierarchy reads clearly — caret on
+// the left, count of leaf groups on the right.
+function SubcategoryHeader({ label, count, open, onClick }) {
+  const accent = C.gold;
+  return (
+    <NavLink
+      label={label}
+      active={open}
+      color={accent}
+      onClick={onClick}
+      leftSection={
+        <span style={{ fontSize: 11, width: 12, textAlign: "center", color: open ? accent : C.textMuted, transition: "color 0.2s ease" }}>
+          {open ? "▾" : "▸"}
+        </span>
+      }
+      rightSection={
+        <span style={{ fontSize: 10.5, fontFamily: BODY, color: open ? accent : C.textFaint }}>
+          {count}
+        </span>
+      }
+      styles={{
+        root: { borderRadius: 10, marginBottom: 2 },
+        label: {
+          fontFamily: BODY, fontSize: 11.5, fontWeight: 700,
+          letterSpacing: "0.07em", textTransform: "uppercase",
+          color: open ? accent : C.textSub,
+        },
       }}
     />
   );
@@ -612,9 +686,36 @@ function RoutineListItem({ routine, selected, onClick }) {
 }
 
 const Sidebar = React.memo(function Sidebar({
-  lens, setLens, groups, openGroup, setOpenGroup,
+  lens, setLens, groups, sections, openGroup, setOpenGroup, openSection, setOpenSection,
   selected, onSelectDua, onSelectRoutine, isNarrow, script, hidden, onExitToLanding,
 }) {
+  // Render one leaf group: its header plus, when open, the duas beneath it.
+  // A plain render function (not a nested component) so React keeps the list
+  // mounted across state changes rather than remounting it every render.
+  const renderLeaf = (g) => (
+    <div key={g.id} style={{ marginBottom: 7 }}>
+      <GroupHeader
+        group={g}
+        open={openGroup === g.id}
+        onClick={() => setOpenGroup(openGroup === g.id ? null : g.id)}
+      />
+      {openGroup === g.id && (
+        <div className="fadeIn" style={{
+          display: "flex", flexDirection: "column", gap: 2,
+          padding: "6px 0 4px 6px",
+        }}>
+          {g.duas.map(d => (
+            <DuaListItem
+              key={d.id}
+              dua={d}
+              selected={selected?.type === "dua" && selected.id === d.id}
+              onClick={() => onSelectDua(d)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
   return (
     <div style={{
       width: isNarrow ? "100%" : 322,
@@ -680,7 +781,7 @@ const Sidebar = React.memo(function Sidebar({
         }}>
           {lens === "moods"    && "Find a dua by the state of your heart"}
           {lens === "timings"  && "Find a dua by the hour of your day"}
-          {lens === "sources"  && "Browse by the collection it comes from"}
+          {lens === "sources"  && "Browse by source, or by the prophet who made the dua"}
           {lens === "routines" && "Short sequences to recite together"}
         </div>
       )}
@@ -694,40 +795,36 @@ const Sidebar = React.memo(function Sidebar({
         {/* Mobile: the section overview (what this is, how to use it) sits at
             the top of the list so the user is oriented before any prayers. */}
         {isNarrow && <SectionOverview lens={lens} variant="inline" />}
-        {lens === "routines"
-          ? ROUTINES.map(r => (
-              <RoutineListItem
-                key={r.id}
-                routine={r}
-                selected={selected?.type === "routine" && selected.id === r.id}
-                onClick={() => onSelectRoutine(r)}
-                script={script}
+        {lens === "routines" ? (
+          ROUTINES.map(r => (
+            <RoutineListItem
+              key={r.id}
+              routine={r}
+              selected={selected?.type === "routine" && selected.id === r.id}
+              onClick={() => onSelectRoutine(r)}
+              script={script}
+            />
+          ))
+        ) : lens === "sources" ? (
+          // Library: two collapsible subcategories, each holding its leaf groups.
+          sections.map(section => (
+            <div key={section.id} style={{ marginBottom: 6 }}>
+              <SubcategoryHeader
+                label={section.label}
+                count={section.groups.length}
+                open={openSection === section.id}
+                onClick={() => setOpenSection(openSection === section.id ? null : section.id)}
               />
-            ))
-          : groups.map(g => (
-              <div key={g.id} style={{ marginBottom: 7 }}>
-                <GroupHeader
-                  group={g}
-                  open={openGroup === g.id}
-                  onClick={() => setOpenGroup(openGroup === g.id ? null : g.id)}
-                />
-                {openGroup === g.id && (
-                  <div className="fadeIn" style={{
-                    display: "flex", flexDirection: "column", gap: 2,
-                    padding: "6px 0 4px 6px",
-                  }}>
-                    {g.duas.map(d => (
-                      <DuaListItem
-                        key={d.id}
-                        dua={d}
-                        selected={selected?.type === "dua" && selected.id === d.id}
-                        onClick={() => onSelectDua(d)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              {openSection === section.id && (
+                <div className="fadeIn" style={{ padding: "4px 0 6px 8px" }}>
+                  {section.groups.map(renderLeaf)}
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          groups.map(renderLeaf)
+        )}
       </div>
     </div>
   );
@@ -1620,15 +1717,30 @@ export default function App({ onExitToLanding }) {
     return "moods";
   });
   const [openGroup, setOpenGroup] = useState(() => {
-    // Restore the expanded category on refresh, but only if it belongs to the
-    // restored section.
+    // Restore the expanded leaf group on refresh, but only if it belongs to the
+    // restored lens. The Library lens nests deeper, so its leaves are validated
+    // against the flat list of namespaced leaf ids.
     try {
       const g = window.localStorage.getItem("zikir.group");
       if (g) {
         const lv = window.localStorage.getItem("zikir.lens");
         const lensId = LENSES.some(l => l.id === lv) ? lv : "moods";
-        if (lensId !== "routines" && groupsForLens(lensId).some(x => x.id === g)) return g;
+        if (lensId === "sources") {
+          if (libraryLeafIds().includes(g)) return g;
+        } else if (lensId !== "routines" && groupsForLens(lensId).some(x => x.id === g)) {
+          return g;
+        }
       }
+    } catch {}
+    return null;
+  });
+  // Which Library subcategory ("sources" | "prophets") is expanded. Only used by
+  // the Library lens; restored on refresh if it belongs there.
+  const [openSection, setOpenSection] = useState(() => {
+    try {
+      const s = window.localStorage.getItem("zikir.section");
+      const lv = window.localStorage.getItem("zikir.lens");
+      if (lv === "sources" && (s === "sources" || s === "prophets")) return s;
     } catch {}
     return null;
   });
@@ -1667,6 +1779,12 @@ export default function App({ onExitToLanding }) {
       }
     } catch {}
   }, [selected]);
+  useEffect(() => {
+    try {
+      if (openSection) window.localStorage.setItem("zikir.section", openSection);
+      else window.localStorage.removeItem("zikir.section");
+    } catch {}
+  }, [openSection]);
   useEffect(() => {
     try {
       if (openGroup) window.localStorage.setItem("zikir.group", openGroup);
@@ -1743,9 +1861,23 @@ export default function App({ onExitToLanding }) {
   }, []);
 
   const groups = useMemo(
-    () => lens === "routines" ? [] : groupsForLens(lens),
+    () => (lens === "routines" || lens === "sources") ? [] : groupsForLens(lens),
     [lens]
   );
+  // The Library lens's nested subcategories. Empty for every other lens.
+  const sections = useMemo(
+    () => lens === "sources" ? librarySections() : [],
+    [lens]
+  );
+  // Opening a Library leaf from the overview cards (where its subcategory may be
+  // collapsed) must expand that subcategory too. The leaf id is namespaced, so
+  // we can derive the subcategory from it. For the flat lenses (no namespace)
+  // this just sets the open group, as before.
+  const pickGroup = useCallback((leafId) => {
+    const sec = librarySectionOf(leafId);
+    if (sec) setOpenSection(sec);
+    setOpenGroup(leafId);
+  }, []);
   // Switching sections collapses the open category (the user lands on the
   // SectionOverview and chooses where to begin). Skipped on the initial mount,
   // so a category restored from a refresh stays expanded.
@@ -1753,6 +1885,7 @@ export default function App({ onExitToLanding }) {
   useEffect(() => {
     if (!lensInited.current) { lensInited.current = true; return; }
     setOpenGroup(null);
+    setOpenSection(null);
   }, [lens]);
 
   const speak = useCallback((text) => {
@@ -1827,8 +1960,9 @@ export default function App({ onExitToLanding }) {
         <SectionOverview
           lens={lens}
           groups={groups}
+          sections={sections}
           routines={ROUTINES}
-          onPickGroup={setOpenGroup}
+          onPickGroup={pickGroup}
           onSelectRoutine={selectRoutine}
           variant="panel"
         />
@@ -1967,7 +2101,9 @@ export default function App({ onExitToLanding }) {
       <Sidebar
         lens={lens} setLens={pickLens}
         groups={groups}
+        sections={sections}
         openGroup={openGroup} setOpenGroup={setOpenGroup}
+        openSection={openSection} setOpenSection={setOpenSection}
         selected={selected}
         onSelectDua={selectDua}
         onSelectRoutine={selectRoutine}

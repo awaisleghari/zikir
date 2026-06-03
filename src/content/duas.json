@@ -57,6 +57,7 @@
   {
     "id": "h1",
     "category": "hardship",
+    "prophet": "yunus",
     "moods": ["anxious"],
     "timings": ["hardmoment"],
     "use": "When you feel trapped in the dark",
@@ -241,6 +242,7 @@
   {
     "id": "g2",
     "category": "guidance",
+    "prophet": "musa",
     "moods": ["guidance", "hopeful"],
     "timings": ["beforetask"],
     "use": "Before you have to speak",
@@ -291,5 +293,22 @@
     "context": "The Sunnah words of congratulation for a newly married couple.",
     "whenToRecite": "For your own marriage, or any union you wish to see blessed.",
     "benefit": "The Sunnah congratulation for a newly married couple. Recite for your own marriage or any union you wish to see blessed."
+  },
+  {
+    "id": "adam-1",
+    "prophet": "adam",
+    "use": "When you have wronged and turn back",
+    "title": "The Dua of Adam ؑ — Mercy After a Wrong",
+    "arabic": "رَبَّنَا ظَلَمْنَآ أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ ٱلْخَٰسِرِينَ",
+    "translit": "Rabbanā ẓalamnā anfusanā wa in lam taghfir lanā wa tarḥamnā lanakūnanna minal-khāsirīn",
+    "translations": {
+      "en": "Our Lord, we have wronged ourselves, and if You do not forgive us and have mercy upon us, we will surely be among the losers.",
+      "ur": "اے ہمارے رب! ہم نے اپنی جانوں پر ظلم کیا، اور اگر تو نے ہمیں نہ بخشا اور ہم پر رحم نہ کیا تو ہم ضرور نقصان اٹھانے والوں میں سے ہو جائیں گے۔"
+    },
+    "source": "Quran 7:23",
+    "context": "A prayer of return after a wrong. It names the fault plainly, 'we have wronged ourselves,' then rests entirely on Allah's forgiveness and mercy, recognizing that without them one is truly lost. It answers a slip by owning it, not by explaining it away.",
+    "story": "These are the words of Adam ؑ and his wife after they ate from the one tree they had been forbidden in the Garden (Quran 2:35, 20:120). What the Quran preserves is not the lapse but the turning back: rather than shift the blame, they took ownership and asked their Lord for forgiveness and mercy in these very words (Quran 7:23). Allah accepted their repentance, as He tells us, 'Then Adam received words from his Lord, and He accepted his repentance.' (Quran 2:37)",
+    "whenToRecite": "After any wrong or shortcoming, when you want to own it and turn back to Allah rather than excuse it.",
+    "benefit": "The words of Adam ؑ after the slip in the Garden (Quran 7:23). He took immediate ownership and asked for forgiveness and mercy, and Allah accepted his repentance (Quran 2:37)."
   }
 ]

@@ -63,9 +63,9 @@ const LENS_COPY = {
     label: "Library",
     glyph: "❖",
     accent: LENS_COLOR.sources,
-    tagline: "Browse by the collection a dua comes from.",
-    what: "In this view the duas are organized by the collection that preserved them, from the Quran itself to the major books of hadith such as Bukhari, Muslim, and Tirmidhi. Every entry carries its reference so you can trace it to its origin.",
-    how: "Choose a collection to see the supplications drawn from it. This is the view to reach for when you want to study by source, or when you already know the reference you are looking for.",
+    tagline: "Browse by source, or by the prophet who made the dua.",
+    what: "The Library opens onto the same collection two ways. Under Sources, the duas are grouped by the work that preserved them, from the Quran itself to the major books of hadith such as Bukhari, Muslim, and Tirmidhi. Under Dua of the Prophets, the supplications the Quran records from the prophets are gathered under each prophet's name. Every entry carries its reference so you can trace it to its origin.",
+    how: "Open Sources to study by collection, or when you already know the reference you are looking for. Open Dua of the Prophets to read each prophet's supplication in turn. Choose a heading to expand it, then a name beneath it to see the duas it holds.",
   },
   routines: {
     label: "Routines",
@@ -113,7 +113,7 @@ function OverviewCard({ accent, title, meta, arabic, onClick }) {
 }
 
 export default function SectionOverview({
-  lens, groups = [], routines = [], onPickGroup, onSelectRoutine, variant = "panel",
+  lens, groups = [], sections = [], routines = [], onPickGroup, onSelectRoutine, variant = "panel",
 }) {
   const copy = LENS_COPY[lens];
   if (!copy) return null;
@@ -191,18 +191,46 @@ export default function SectionOverview({
         />
       ));
 
+  // The Library lens nests one level deeper: rather than a single grid, it
+  // shows each subcategory ("Sources", "Dua of the Prophets") as its own
+  // labeled block of cards. Picking a card opens that leaf in the sidebar.
+  const begin = lens === "sources" ? (
+    <Stack gap={24}>
+      {sections.map((section) => (
+        <Box key={section.id}>
+          <Text style={{ color: C.gold, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>
+            {section.label}
+          </Text>
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={12} verticalSpacing={12}>
+            {section.groups.map((g) => (
+              <OverviewCard
+                key={g.id}
+                accent={g.color}
+                title={g.label}
+                meta={`${g.duas.length} ${g.duas.length === 1 ? "dua" : "duas"}`}
+                onClick={() => onPickGroup?.(g.id)}
+              />
+            ))}
+          </SimpleGrid>
+        </Box>
+      ))}
+    </Stack>
+  ) : (
+    <Box>
+      <Text style={{ color: INK_FAINT, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>
+        {lens === "routines" ? "Choose a routine" : "Choose where to begin"}
+      </Text>
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={12} verticalSpacing={12}>
+        {cards}
+      </SimpleGrid>
+    </Box>
+  );
+
   return (
     <Box className="detailIn" style={{ maxWidth: 760, margin: "0 auto" }}>
       <Stack gap={28}>
         {intro}
-        <Box>
-          <Text style={{ color: INK_FAINT, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>
-            {lens === "routines" ? "Choose a routine" : "Choose where to begin"}
-          </Text>
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={12} verticalSpacing={12}>
-            {cards}
-          </SimpleGrid>
-        </Box>
+        {begin}
       </Stack>
     </Box>
   );
